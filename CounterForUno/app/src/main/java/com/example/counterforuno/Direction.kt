@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -56,7 +57,7 @@ class Direction : ComponentActivity() {
         val isClock = remember {
             mutableStateOf(true)
         }
-        Column(
+        Row(
             Modifier
                 .fillMaxSize()
                 .paint(
@@ -66,8 +67,8 @@ class Direction : ComponentActivity() {
         ) {
             Box(
                 Modifier
-                    .fillMaxSize(0.9f)
-                    .padding(start = 250.dp)
+                    .fillMaxSize(0.8f)
+                    .padding(start = 200.dp).align(Alignment.CenterVertically)
             ) {
 
                 if (isClock.value) {
@@ -104,8 +105,8 @@ class Direction : ComponentActivity() {
                 },
                 Modifier
                     .height(100.dp)
-                    .width(200.dp)
-                    .align(Alignment.CenterHorizontally)
+                    .width(250.dp)
+                    .align(Alignment.CenterVertically).rotate(-90f)
             ) {
                 Text(text = "Back to the game", fontSize = 25.sp)
 

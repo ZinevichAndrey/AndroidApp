@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class MainMenu : ComponentActivity() {
-    private val textSize = 40.sp
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
