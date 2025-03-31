@@ -35,7 +35,7 @@
         </activity>
         <activity android:name=".Direction"
             android:label="Direction"
-            android:screenOrientation="landscape">
+            android:screenOrientation="portrait">
         </activity>
     </application>
 

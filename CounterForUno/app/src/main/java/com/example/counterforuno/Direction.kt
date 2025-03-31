@@ -8,10 +8,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -21,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -45,8 +42,8 @@ class Direction : ComponentActivity() {
             }
             Settings.hideActionBar(this)
             createDirection(
-                imageClockwise = R.drawable.direction_clockwise_draw,
-                imageCounterclockwise = R.drawable.direction_counterclockwise_draw
+                imageClockwise = R.drawable.direction_clockwise,
+                imageCounterclockwise = R.drawable.direction_counterclockwise
             )
         }
     }
@@ -57,18 +54,18 @@ class Direction : ComponentActivity() {
         val isClock = remember {
             mutableStateOf(true)
         }
-        Row(
+        Column(
             Modifier
                 .fillMaxSize()
                 .paint(
-                    painterResource(id = R.drawable.game_bg_draw),
+                    painterResource(id = R.drawable.game_bg),
                     contentScale = ContentScale.FillBounds
                 )
         ) {
             Box(
                 Modifier
                     .fillMaxSize(0.8f)
-                    .padding(start = 200.dp).align(Alignment.CenterVertically)
+                    .align(Alignment.CenterHorizontally)
             ) {
 
                 if (isClock.value) {
@@ -78,7 +75,6 @@ class Direction : ComponentActivity() {
                     mediaPlayerPo!!.startPlayer()
                     Image(painter = painterResource(id = imageClockwise), contentDescription = null,
                         Modifier
-                            .rotate(90f)
                             .clickable {
                                 isClock.value = !isClock.value
                             }, contentScale = ContentScale.FillBounds
@@ -91,7 +87,6 @@ class Direction : ComponentActivity() {
                     Image(painter = painterResource(id = imageCounterclockwise),
                         contentDescription = null,
                         modifier = Modifier
-                            .rotate(90f)
                             .clickable {
                                 isClock.value = !isClock.value
                             },
@@ -106,7 +101,7 @@ class Direction : ComponentActivity() {
                 Modifier
                     .height(100.dp)
                     .width(250.dp)
-                    .align(Alignment.CenterVertically).rotate(-90f)
+                    .align(Alignment.CenterHorizontally)
             ) {
                 Text(text = "Back to the game", fontSize = 25.sp)
 

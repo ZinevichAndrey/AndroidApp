@@ -1,10 +1,16 @@
 package com.example.counterforuno
 
-data class Player(
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+
+class Player(
     private val id: Long = IdPlayer.initId(),
     var name: String,
     var avatar: Int,
-    var score: Int) {
+){
+     var score by mutableStateOf(0)
 
     fun getId(): Long {
         return this.id
@@ -19,6 +25,8 @@ data class Player(
             return playerId
         }
     }
+
+
 }
 
 
