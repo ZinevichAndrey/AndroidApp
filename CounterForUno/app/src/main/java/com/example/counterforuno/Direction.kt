@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-
 class Direction : ComponentActivity() {
     private var mediaPlayerPo: GameVoiceover? = GameVoiceover()
     private var mediaPlayerPro: GameVoiceover? = GameVoiceover()
@@ -33,13 +32,8 @@ class Direction : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            if (mediaPlayerPo != null && mediaPlayerPro != null) {
-                mediaPlayerPo!!.init(this@Direction, R.raw.po_dir)
-                mediaPlayerPro!!.init(this@Direction, R.raw.pro_dir)
-            }
-            else {
-                throw NullPointerException("object GameVoicecover is null")
-            }
+            mediaPlayerPo!!.init(this@Direction, R.raw.po_dir)
+            mediaPlayerPro!!.init(this@Direction, R.raw.pro_dir)
             Settings.hideActionBar(this)
             createDirection(
                 imageClockwise = R.drawable.direction_clockwise,
@@ -73,7 +67,8 @@ class Direction : ComponentActivity() {
                         mediaPlayerPro!!.restartAudioTrack()
                     }
                     mediaPlayerPo!!.startPlayer()
-                    Image(painter = painterResource(id = imageClockwise), contentDescription = null,
+                    Image(
+                        painter = painterResource(id = imageClockwise), contentDescription = null,
                         Modifier
                             .clickable {
                                 isClock.value = !isClock.value
@@ -84,7 +79,8 @@ class Direction : ComponentActivity() {
                         mediaPlayerPo!!.restartAudioTrack()
                     }
                     mediaPlayerPro!!.startPlayer()
-                    Image(painter = painterResource(id = imageCounterclockwise),
+                    Image(
+                        painter = painterResource(id = imageCounterclockwise),
                         contentDescription = null,
                         modifier = Modifier
                             .clickable {
@@ -123,7 +119,6 @@ class Direction : ComponentActivity() {
             this.mediaPlayerPro = null
         }
     }
-
 
 
 }
