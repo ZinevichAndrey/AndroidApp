@@ -6,9 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -50,9 +54,9 @@ class GameMenu : ComponentActivity() {
             //For test
             playerList.add(Player(name = "Андрей", avatar = R.drawable.main_fon))
             playerList.add(Player(name = "Тётя Люба", avatar = R.drawable.main_fon))
-            playerList.add(Player(name = "Катя", avatar = R.drawable.main_fon, ))
-            playerList.add(Player(name = "Дядя Саша", avatar = R.drawable.main_fon,))
-            playerList.add(Player(name = "Серёга", avatar = R.drawable.main_fon,))
+            playerList.add(Player(name = "Катя", avatar = R.drawable.main_fon))
+            playerList.add(Player(name = "Дядя Саша", avatar = R.drawable.main_fon))
+            playerList.add(Player(name = "Серёга", avatar = R.drawable.main_fon))
             screenSize = Settings.getScreenResolution(this)
             widthDp = Settings.intToDp(screenSize.first)
             widthScreen = widthDp
@@ -76,55 +80,94 @@ class GameMenu : ComponentActivity() {
                     contentScale = ContentScale.Crop
                 )
         ) {
-            LazyColumn(Modifier.fillMaxWidth().fillMaxHeight(0.9f)) {
-                items(playersList ) { player ->
+            LazyColumn(
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.9f)
+            ) {
+                items(playersList) { player ->
 
-                        Column(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = player.name,
-                                fontSize = 40.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Justify
-                            )
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = player.name,
+                            fontSize = 40.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Justify
+                        )
+
+                        Row(
+                            Modifier
+                                .fillMaxWidth(),
+                            Arrangement.SpaceBetween,
+                            Alignment.CenterVertically
+                        ) {
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .pressClickEffect()
+                                    .padding(top = 30.dp)
+                                    .clickable(interactionSource = remember {
+                                        MutableInteractionSource()
+                                    }, indication = null, onClick = {
+                                        if (player.score > 0) {
+                                            player.score -= 1
+                                            playerList.sortWith(comparator)
+                                            playersList.clear()
+                                            playersList.addAll(playerList)
+                                        }
+                                    })
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.button_minus),
+                                    contentDescription = null,
+                                    Modifier
+                                        .height(80.dp)
+                                        .width(174.dp)
+                                )
+                            }
+
                             Image(
                                 painter = painterResource(id = player.avatar),
                                 contentDescription = null,
-                                Modifier.size(170.dp)
+                                Modifier
+                                    .weight(1f)
+                                    .size(170.dp)
                             )
-                        }
-                    Row(
-                        Modifier.fillMaxWidth().padding(10.dp),
-                        Arrangement.SpaceBetween,
-                        Alignment.CenterVertically
-                    ) {
 
-                        Button(onClick = {
-                            if (player.score > 0) {
-                                player.score -= 1
-                                playerList.sortWith(comparator)
-                                playersList.clear()
-                                playersList.addAll(playerList)
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .pressClickEffect()
+                                    .padding(top = 30.dp)
+                                    .clickable(interactionSource = remember {
+                                        MutableInteractionSource()
+                                    }, indication = null, onClick = {
+                                        player.score += 1
+                                        playerList.sortWith(comparator)
+                                        playersList.clear()
+                                        playersList.addAll(playerList)
+                                    })
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.button_plus),
+                                    contentDescription = null,
+                                    Modifier
+                                        .height(80.dp)
+                                        .width(174.dp)
+                                )
                             }
-                        }, Modifier.size(100.dp)) {
-                            Text(text = "-", fontSize = 50.sp)
+
                         }
                         Text(
                             text = player.score.toString(),
                             fontSize = 50.sp,
                             color = Color.White
                         )
-
-
-                        Button(onClick = {
-                            println(player.score)
-                            player.score += 1
-                            playerList.sortWith(comparator)
-                            playersList.clear()
-                            playersList.addAll(playerList)
-
-                        }, Modifier.size(100.dp)) {
-                            Text(text = "+", fontSize = 50.sp)
-                        }
                     }
                     Box(
                         modifier = Modifier
@@ -145,42 +188,70 @@ class GameMenu : ComponentActivity() {
         Row(
             Modifier
                 .fillMaxSize()
-                .padding(top = 10.dp)
+                .padding(top = 15.dp)
         ) {
-            Button(
-                onClick = {
-                },
+            Box(
                 Modifier
                     .weight(1f)
-                    .height(100.dp)
-                    .width(widthScreen.dp)
+                    .pressClickEffect()
+                    .clickable(interactionSource = remember {
+                        MutableInteractionSource()
+                    }, null, onClick = {
+                        val player = playerList[0]
+                        if (player.score != 0) {
+                            val intent = Intent(context, TotalScore::class.java)
+                            intent.putExtra(Settings.getKeyWinner(), player)
+                            context.startActivity(intent)
+                            finish()
+                        }
+                    })
             ) {
-                Text(text = "Finish", fontSize = 20.sp, textAlign = TextAlign.Justify)
+                Image(
+                    painter = painterResource(id = R.drawable.button_finish),
+                    contentDescription = null,
+                    Modifier
+                        .height(80.dp)
+                        .width(174.dp)
+                )
             }
-            Button(
-                onClick = { /*TODO*/ },
+            Box(
                 Modifier
                     .weight(1f)
-                    .height(100.dp)
-                    .width(widthScreen.dp)
-            ) {
-                Text(text = "Create character", fontSize = 20.sp, textAlign = TextAlign.Center)
-            }
-            Button(
-                onClick = {
-                    context.startActivity(Intent(context, Direction::class.java))
+                    .pressClickEffect()
+                    .clickable(interactionSource = remember {
+                        MutableInteractionSource()
+                    }, null, onClick = {
 
-                },
+                    })
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.button_new_user),
+                    contentDescription = null,
+                    Modifier
+                        .height(80.dp)
+                        .width(174.dp)
+                )
+            }
+            Box(
                 Modifier
                     .weight(1f)
-                    .height(100.dp)
-                    .width(widthScreen.dp)
+                    .pressClickEffect()
+                    .clickable(interactionSource = remember {
+                        MutableInteractionSource()
+                    }, null, onClick = {
+                        context.startActivity(Intent(context, Direction::class.java))
+                    })
             ) {
-                Text(text = "Direction", fontSize = 20.sp, textAlign = TextAlign.Justify)
+                Image(
+                    painter = painterResource(id = R.drawable.button_direction),
+                    contentDescription = null,
+                    Modifier
+                        .height(80.dp)
+                        .width(174.dp)
+                )
             }
         }
     }
-
 
 
 }

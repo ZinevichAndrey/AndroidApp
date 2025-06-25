@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">CounterForUno</string>
+    <string name="start_game">Start</string>
+    <string name="alert_accept_mes">Подтверждение</string>
+    <string name="alert_mes">Вы уверены, что хотите очистить список победителей?</string>
+    <string name="alert_clear">Очистить</string>
+    <string name="alert_cancel">Отмена</string>
+</resources>

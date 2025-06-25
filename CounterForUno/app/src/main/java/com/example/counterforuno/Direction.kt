@@ -6,24 +6,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+
+
 
 
 class Direction : ComponentActivity() {
@@ -54,11 +58,12 @@ class Direction : ComponentActivity() {
                 .fillMaxSize()
                 .paint(
                     painterResource(id = R.drawable.game_bg),
-                    contentScale = ContentScale.FillBounds
+                    contentScale = ContentScale.Crop
                 )
         ) {
             Box(
-                Modifier.padding(top = 130.dp)
+                Modifier
+                    .padding(top = 130.dp)
                     .fillMaxSize(0.8f)
                     .align(Alignment.CenterHorizontally)
             ) {
@@ -68,40 +73,50 @@ class Direction : ComponentActivity() {
                         mediaPlayerPro!!.restartAudioTrack()
                     }
                     mediaPlayerPo!!.startPlayer()
-                    Image(
-                        painter = painterResource(id = imageClockwise), contentDescription = null,
-                        Modifier
-                            .clickable {
-                                isClock.value = !isClock.value
-                            }, contentScale = ContentScale.FillBounds
-                    )
+
                 } else {
                     if (mediaPlayerPo!!.getMediaPlayer().isPlaying) {
                         mediaPlayerPo!!.restartAudioTrack()
                     }
                     mediaPlayerPro!!.startPlayer()
-                    Image(
-                        painter = painterResource(id = imageCounterclockwise),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .clickable {
-                                isClock.value = !isClock.value
-                            },
-                        contentScale = ContentScale.FillBounds
-                    )
+                }
+
+                Box(
+                    Modifier
+                        .shakeClickEffect()
+                        .clickable(interactionSource = remember {
+                            MutableInteractionSource()
+                        }, indication = null, onClick = {
+                            isClock.value = !isClock.value
+                        })) {
+                    if (isClock.value) {
+                            Image(
+                                painter = painterResource(id = imageClockwise),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    else {
+                            Image(
+                                painter = painterResource(id = imageCounterclockwise),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                 }
             }
-            Button(
-                onClick = {
-                    finish()
-                },
-                Modifier
-                    .height(100.dp)
-                    .width(250.dp)
-                    .align(Alignment.CenterHorizontally)
-            ) {
-                Text(text = "Back to the game", fontSize = 25.sp)
-
+            Box(Modifier.align(Alignment.CenterHorizontally).pressClickEffect().clickable(interactionSource = remember {
+                MutableInteractionSource()
+            }, null, onClick = {
+                finish()
+            }) ) {
+                Image(
+                    painter = painterResource(id = R.drawable.button_back),
+                    contentDescription = "btn_back",
+                    Modifier
+                        .width(174.dp)
+                        .height(80.dp), contentScale = ContentScale.Crop
+                )
             }
         }
 
@@ -122,4 +137,8 @@ class Direction : ComponentActivity() {
     }
 
 
+
+
 }
+
+

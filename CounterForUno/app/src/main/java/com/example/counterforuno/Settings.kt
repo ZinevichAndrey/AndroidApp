@@ -11,7 +11,11 @@ import androidx.activity.ComponentActivity
 
 object Settings{
     private val screenErrorTag = "ErrorScreen"
+    private const val WINNER_KEY = "WINNER"
 
+    fun getKeyWinner(): String {
+        return WINNER_KEY
+    }
 
 
     fun getScreenResolution(context: Context): Pair<Int, Int> {
