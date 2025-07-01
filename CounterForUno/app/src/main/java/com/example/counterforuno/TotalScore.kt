@@ -1,9 +1,9 @@
 package com.example.counterforuno
 
 
+
+import android.content.Context
 import android.os.Bundle
-import android.os.Environment
-import android.os.Parcel
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -40,28 +40,30 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.io.BufferedOutputStream
 import java.io.File
-import java.io.FileOutputStream
+
 
 
 class TotalScore : ComponentActivity() {
     private val winners = ArrayList<Player>()
+    private val WINNERS_LIST = "WINNERS_LIST.txt"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Settings.hideActionBar(this)
             val getIntentValue = intent.getParcelableExtra(Settings.getKeyWinner()) as? Player
+            val list = WriterAndReader.loadWinnersFromFile(this, WINNERS_LIST)
+            winners.addAll(list)
             if (getIntentValue != null) {
+                WriterAndReader.saveWinnerToFile(this, getIntentValue, WINNERS_LIST)
                 winners.add(getIntentValue)
             }
-
-            
 
 //            winners.add(Player(name = "Andrey", avatar = R.drawable.main_fon))
 //            winners.add(Player(name = "Vas9", avatar = R.drawable.main_fon))
@@ -94,6 +96,7 @@ class TotalScore : ComponentActivity() {
             mutableStateListOf<Player>()
         }
         winnerList.addAll(list)
+        val context = LocalContext.current
         Column(
             Modifier
                 .fillMaxSize()
@@ -167,12 +170,12 @@ class TotalScore : ComponentActivity() {
                     )
                 }
             }
-            createButtons(winnerList)
+            createButtons(context, winnerList)
         }
     }
 
     @Composable
-    private fun createButtons(list: MutableList<Player>) {
+    private fun createButtons(context: Context, list: MutableList<Player>) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -180,7 +183,7 @@ class TotalScore : ComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
             Alignment.CenterVertically
         ) {
-                confirmationDeletion(list)
+                confirmationDeletion(context, list)
             Box(
                 Modifier
                     .pressClickEffect()
@@ -214,13 +217,10 @@ class TotalScore : ComponentActivity() {
         )
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
 
-    }
 
     @Composable
-    private fun confirmationDeletion(list: MutableList<Player>) {
+    private fun confirmationDeletion(context: Context, list: MutableList<Player>) {
         val openDialog = remember {
             mutableStateOf(false)
         }
@@ -232,7 +232,6 @@ class TotalScore : ComponentActivity() {
                     MutableInteractionSource()
                 }, indication = null, onClick = {
                     openDialog.value = true
-
                 })
         ) {
             Image(
@@ -252,6 +251,10 @@ class TotalScore : ComponentActivity() {
                     openDialog.value = false
                     list.clear()
                     winners.clear()
+                    val file = File(context.filesDir, WINNERS_LIST)
+                    if (file.exists()) {
+                        file.delete()
+                    }
                 }, colors = buttonColor, border = BorderStroke(1.dp, Color.LightGray)) {
                     Text(text = getString(R.string.alert_clear))
                 }
@@ -266,52 +269,12 @@ class TotalScore : ComponentActivity() {
                 textContentColor = Color.LightGray,
                 iconContentColor = Color.LightGray
                 )
+
         }
 
     }
 
 
-
-    fun Player.toByteArray(): ByteArray {
-        val parcel = Parcel.obtain()
-        this.writeToParcel(parcel, 0)
-        val bytes = parcel.marshall()
-        parcel.recycle()
-        return bytes
-    }
-
-    fun saveWinnerToFile(winner: Player, filePath: String) {
-        val byteArray = winner.toByteArray()
-        val file = File(filePath)
-        try {
-            BufferedOutputStream(FileOutputStream(file)).use { outputStream -> outputStream.write(byteArray)
-            }
-            println("save")
-        }
-        catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-
-
-
-    fun loadWinnersFromFile(filePath: String): Player? {
-            val file = File(filePath)
-            return try {
-                val byteArray = file.readBytes()
-                val parcel = Parcel.obtain()
-                parcel.unmarshall(byteArray, 0, byteArray.size)
-                parcel.setDataPosition(0)
-                val myData = Player.createFromParcel(parcel)
-                parcel.recycle()
-                myData
-            } catch (e: Exception) {
-               e.printStackTrace()
-                null
-            }
-
-    }
 
 
 

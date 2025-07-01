@@ -32,10 +32,12 @@
             android:label="GameMenu">
         </activity>
         <activity android:name=".TotalScore"
+            android:theme="@style/Theme.CounterForUno"
             android:screenOrientation="portrait"
             android:label="TotalScore">
         </activity>
         <activity android:name=".Direction"
+            android:theme="@style/Theme.CounterForUno"
             android:label="Direction"
             android:screenOrientation="portrait">
         </activity>

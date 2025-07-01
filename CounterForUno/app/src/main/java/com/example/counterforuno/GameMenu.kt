@@ -11,7 +11,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,8 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -45,6 +42,7 @@ class GameMenu : ComponentActivity() {
     private var widthDp: Int = 0
     private var widthScreen = 0
     private val comparator = Comparator { p1: Player, p2: Player -> p2.score - p1.score }
+    private val PLAYERS_KEY = "players.txt"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +55,8 @@ class GameMenu : ComponentActivity() {
             playerList.add(Player(name = "Катя", avatar = R.drawable.main_fon))
             playerList.add(Player(name = "Дядя Саша", avatar = R.drawable.main_fon))
             playerList.add(Player(name = "Серёга", avatar = R.drawable.main_fon))
+//            val list = WriterAndReader.loadWinnersFromFile(this, PLAYERS_KEY)
+//            playerList.addAll(list)
             screenSize = Settings.getScreenResolution(this)
             widthDp = Settings.intToDp(screenSize.first)
             widthScreen = widthDp
