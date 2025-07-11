@@ -12,6 +12,11 @@ import androidx.activity.ComponentActivity
 object Settings{
     private val screenErrorTag = "ErrorScreen"
     private const val WINNER_KEY = "WINNER"
+    private const val CREATE_PLAYER_KEY = "CreatePlayer"
+
+    fun getCreatePlayerKey(): String {
+        return CREATE_PLAYER_KEY
+    }
 
     fun getKeyWinner(): String {
         return WINNER_KEY

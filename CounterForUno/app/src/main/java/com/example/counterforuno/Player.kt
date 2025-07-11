@@ -12,7 +12,7 @@ class Player(
     private val id: Long = IdPlayer.initId(),
     var name: String,
     var avatar: Int,
-    var numberOfVictories: Int = 0
+    var numberOfVictories: Int = 1
 ): Parcelable {
 
      var score by mutableStateOf(0)

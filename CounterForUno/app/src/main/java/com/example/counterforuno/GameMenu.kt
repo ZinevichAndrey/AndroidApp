@@ -1,9 +1,12 @@
 package com.example.counterforuno
 
+
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,10 +24,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -35,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.io.File
 
 class GameMenu : ComponentActivity() {
     private val playerList: MutableList<Player> = ArrayList()
@@ -42,7 +52,7 @@ class GameMenu : ComponentActivity() {
     private var widthDp: Int = 0
     private var widthScreen = 0
     private val comparator = Comparator { p1: Player, p2: Player -> p2.score - p1.score }
-    private val PLAYERS_KEY = "players.txt"
+    private val PLAYERS_FILE = "players.txt"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,13 +60,13 @@ class GameMenu : ComponentActivity() {
         setContent {
             Settings.hideActionBar(this)
             //For test
-            playerList.add(Player(name = "Андрей", avatar = R.drawable.main_fon))
-            playerList.add(Player(name = "Тётя Люба", avatar = R.drawable.main_fon))
-            playerList.add(Player(name = "Катя", avatar = R.drawable.main_fon))
-            playerList.add(Player(name = "Дядя Саша", avatar = R.drawable.main_fon))
-            playerList.add(Player(name = "Серёга", avatar = R.drawable.main_fon))
-//            val list = WriterAndReader.loadWinnersFromFile(this, PLAYERS_KEY)
-//            playerList.addAll(list)
+//            playerList.add(Player(name = "Андрей", avatar = R.drawable.main_fon))
+//            playerList.add(Player(name = "Тётя Люба", avatar = R.drawable.main_fon))
+//            playerList.add(Player(name = "Катя", avatar = R.drawable.main_fon))
+//            playerList.add(Player(name = "Дядя Саша", avatar = R.drawable.main_fon))
+//            playerList.add(Player(name = "Серёга", avatar = R.drawable.main_fon))
+            val list = WriterAndReader.loadWinnersFromFile(this, PLAYERS_FILE)
+            playerList.addAll(list)
             screenSize = Settings.getScreenResolution(this)
             widthDp = Settings.intToDp(screenSize.first)
             widthScreen = widthDp
@@ -71,7 +81,7 @@ class GameMenu : ComponentActivity() {
             mutableStateListOf<Player>()
         }
         playersList.addAll(playerList)
-
+        val context = LocalContext.current
         Column(
             Modifier
                 .fillMaxSize()
@@ -130,14 +140,32 @@ class GameMenu : ComponentActivity() {
                                         .width(174.dp)
                                 )
                             }
-
+                            var dialog by remember {
+                                mutableStateOf(false)
+                            }
                             Image(
                                 painter = painterResource(id = player.avatar),
                                 contentDescription = null,
                                 Modifier
                                     .weight(1f)
-                                    .size(170.dp)
+                                    .size(170.dp).clickable(onClick = {
+                                        dialog = true
+                                    })
                             )
+
+                            if (dialog) {
+                                deletePlayer(onDismissRequest = {dialog = false}, onConfirm = {
+                                    playersList.remove(player)
+                                    val file = File(context.filesDir, PLAYERS_FILE)
+                                    if (file.exists()) {
+                                        file.delete()
+                                        playersList.forEach {
+                                            WriterAndReader.saveWinnerToFile(context, it, PLAYERS_FILE)
+                                        }
+                                    }
+                                    dialog = false
+                                })
+                            }
 
                             Box(
                                 Modifier
@@ -177,13 +205,13 @@ class GameMenu : ComponentActivity() {
                     )
                 }
             }
-            createNavigationGame()
+            createNavigationGame(playersList)
         }
     }
 
 
     @Composable
-    private fun createNavigationGame() {
+    private fun createNavigationGame(mutableList: SnapshotStateList<Player>) {
         val context = LocalContext.current
         Row(
             Modifier
@@ -199,6 +227,13 @@ class GameMenu : ComponentActivity() {
                     }, null, onClick = {
                         val player = playerList[0]
                         if (player.score != 0) {
+                            val file = File(context.filesDir, PLAYERS_FILE)
+                            if (file.exists()) {
+                                file.delete()
+                            }
+                            playerList.forEach {
+                                WriterAndReader.saveWinnerToFile(context, it, PLAYERS_FILE)
+                            }
                             val intent = Intent(context, TotalScore::class.java)
                             intent.putExtra(Settings.getKeyWinner(), player)
                             context.startActivity(intent)
@@ -214,14 +249,30 @@ class GameMenu : ComponentActivity() {
                         .width(174.dp)
                 )
             }
+
+            val context = LocalContext.current
+            var result by remember {
+                mutableStateOf<Player?>(null)
+            }
+            val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) {
+                    activityResult ->
+                if (activityResult.resultCode == RESULT_OK) {
+                    val data = activityResult.data?.getParcelableExtra<Player>(Settings.getCreatePlayerKey())
+                    result = data
+                    playerList.add(result!!)
+                    mutableList.add(result!!)
+                    WriterAndReader.saveWinnerToFile(context,result!!, PLAYERS_FILE)
+                }
+            }
+
             Box(
-                Modifier
-                    .weight(1f)
+                Modifier.weight(1f)
                     .pressClickEffect()
                     .clickable(interactionSource = remember {
                         MutableInteractionSource()
                     }, null, onClick = {
-
+                        val intent = Intent(context, PlayerMenu::class.java)
+                        launcher.launch(intent)
                     })
             ) {
                 Image(
@@ -250,8 +301,27 @@ class GameMenu : ComponentActivity() {
                         .width(174.dp)
                 )
             }
+
         }
     }
+
+
+    @Composable
+    private fun deletePlayer(onDismissRequest: () -> Unit, onConfirm: () -> Unit) {
+        AlertDialog(onDismissRequest = onDismissRequest,
+            title = {Text("Remove")},
+            text = {Text("This is test")},
+            confirmButton = {
+                TextButton(onClick = onConfirm) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {TextButton(onClick = onDismissRequest) {
+                Text("Dismiss")
+            }})
+    }
+
+
 
 
 }

@@ -60,30 +60,32 @@ class TotalScore : ComponentActivity() {
             val getIntentValue = intent.getParcelableExtra(Settings.getKeyWinner()) as? Player
             val list = WriterAndReader.loadWinnersFromFile(this, WINNERS_LIST)
             winners.addAll(list)
+            val context = LocalContext.current
+            var isFlag = false
             if (getIntentValue != null) {
-                WriterAndReader.saveWinnerToFile(this, getIntentValue, WINNERS_LIST)
-                winners.add(getIntentValue)
+                list.forEach {
+                 if (it.getId() == getIntentValue.getId()) {
+                     it.numberOfVictories++
+                     val file = File(context.filesDir, WINNERS_LIST)
+                     if (file.exists()) {
+                         file.delete()
+                     }
+                     isFlag = true
+                     return@forEach
+                 }
+                }
+                if (!isFlag) {
+                    WriterAndReader.saveWinnerToFile(this, getIntentValue, WINNERS_LIST)
+                    winners.add(getIntentValue)
+                }
+                else {
+                    winners.forEach {
+                        WriterAndReader.saveWinnerToFile(this, it, WINNERS_LIST)
+                    }
+                }
+
             }
 
-//            winners.add(Player(name = "Andrey", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Vas9", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Dima", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kristina", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Andrey", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Vas9", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Dima", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kristina", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kat9", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Andrey", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Vas9", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Dima", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kristina", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kat9", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Andrey", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Vas9", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Dima", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kristina", avatar = R.drawable.main_fon))
-//            winners.add(Player(name = "Kat9", avatar = R.drawable.main_fon))
             createTable(list = winners)
         }
     }

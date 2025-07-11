@@ -5,4 +5,5 @@
     <string name="alert_mes">Вы уверены, что хотите очистить список победителей?</string>
     <string name="alert_clear">Очистить</string>
     <string name="alert_cancel">Отмена</string>
+    <string name="plMenu_name">Вас зовут?</string>
 </resources>

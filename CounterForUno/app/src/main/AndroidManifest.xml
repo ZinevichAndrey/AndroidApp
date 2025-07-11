@@ -31,6 +31,9 @@
             android:screenOrientation="portrait"
             android:label="GameMenu">
         </activity>
+        <activity android:name=".PlayerMenu"
+          android:screenOrientation="portrait"  >
+        </activity>
         <activity android:name=".TotalScore"
             android:theme="@style/Theme.CounterForUno"
             android:screenOrientation="portrait"
