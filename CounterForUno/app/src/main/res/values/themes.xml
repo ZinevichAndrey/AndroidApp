@@ -2,8 +2,9 @@
 <resources>
 
     <style name="Theme.CounterForUno" parent="android:Theme.Material.NoActionBar.Fullscreen" >
-
     </style>
+    
+
 
     
 

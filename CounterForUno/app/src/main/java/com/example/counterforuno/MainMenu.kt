@@ -30,6 +30,7 @@ class MainMenu : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             Settings.hideActionBar(this)
             createMainMenu()
@@ -114,6 +115,7 @@ class MainMenu : ComponentActivity() {
             }
         }
     }
+
 
 
 }

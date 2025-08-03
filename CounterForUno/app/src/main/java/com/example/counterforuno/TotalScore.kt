@@ -1,8 +1,7 @@
 package com.example.counterforuno
 
-
-
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,28 +10,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -41,73 +23,79 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import coil.compose.rememberAsyncImagePainter
 import java.io.File
-
-
 
 class TotalScore : ComponentActivity() {
     private val winners = ArrayList<Player>()
     private val WINNERS_LIST = "WINNERS_LIST.txt"
+    private val colorMetall: Color by lazy {
+        getColor()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Settings.hideActionBar(this)
-            val getIntentValue = intent.getParcelableExtra(Settings.getKeyWinner()) as? Player
-            val list = WriterAndReader.loadWinnersFromFile(this, WINNERS_LIST)
-            winners.addAll(list)
             val context = LocalContext.current
-            var isFlag = false
+            val getIntentValue = intent.getParcelableExtra<Player>(Settings.getKeyWinner())
+            val loadedWinners = WriterAndReader.loadWinnersFromFile(context, WINNERS_LIST).toMutableList()
+
             if (getIntentValue != null) {
-                list.forEach {
-                 if (it.getId() == getIntentValue.getId()) {
-                     it.numberOfVictories++
-                     val file = File(context.filesDir, WINNERS_LIST)
-                     if (file.exists()) {
-                         file.delete()
-                     }
-                     isFlag = true
-                     return@forEach
-                 }
-                }
-                if (!isFlag) {
-                    WriterAndReader.saveWinnerToFile(this, getIntentValue, WINNERS_LIST)
-                    winners.add(getIntentValue)
-                }
-                else {
-                    winners.forEach {
-                        WriterAndReader.saveWinnerToFile(this, it, WINNERS_LIST)
+                var found = false
+                for (winner in loadedWinners) {
+                    if (winner.getId() == getIntentValue.getId()) {
+                        winner.numberOfVictories++
+                        found = true
+                        break
                     }
                 }
-
+                if (!found) {
+                    loadedWinners.add(getIntentValue)
+                }
+                val file = File(context.filesDir, WINNERS_LIST)
+                if (file.exists()) file.delete()
+                for (w in loadedWinners) {
+                    WriterAndReader.saveWinnerToFile(context, w, WINNERS_LIST)
+                }
             }
-
-            createTable(list = winners)
+            winners.clear()
+            winners.addAll(loadedWinners)
+            winners.sortByDescending { it.numberOfVictories }
+            createTable(winners)
         }
     }
 
-
-
     @Composable
     private fun createTable(list: MutableList<Player>) {
-        val winnerList = remember {
-            mutableStateListOf<Player>()
-        }
-        winnerList.addAll(list)
+        val winnerList = remember { mutableStateListOf<Player>().apply { addAll(list) } }
         val context = LocalContext.current
         Column(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .paint(
                     painterResource(id = R.drawable.bg_winners),
                     contentScale = ContentScale.Crop
                 )
         ) {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.winners_760x140),
                     contentDescription = null
@@ -117,48 +105,62 @@ class TotalScore : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.9f)
-
             ) {
                 items(winnerList) { winner ->
                     Row(
-                        Modifier
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 20.dp, start = 20.dp, end = 20.dp)
                     ) {
                         Row(
-                            Modifier
+                            modifier = Modifier
                                 .fillMaxWidth(0.5f)
                                 .height(60.dp)
-                                .padding(end = 50.dp),
+                                .padding(end = 50.dp)
+                                .weight(1f),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 "${winnerList.indexOf(winner) + 1}",
                                 fontSize = 20.sp,
-                                color = Color.White,
+                                color = Color.Gray,
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             )
+                        }
+                        Row(Modifier.weight(1f)) {
                             shadowText(text = winner.name)
                         }
                         Row(
-                            Modifier
+                            modifier = Modifier
+                                .weight(2f)
                                 .fillMaxWidth()
                                 .height(60.dp)
                                 .padding(start = 50.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Image(
-                                painter = painterResource(id = winner.avatar),
-                                contentDescription = null,
-                                Modifier
-                                    .size(60.dp)
-                                    .padding(start = 10.dp)
-                            )
+                            val painter = when (val avatar = winner.avatar) {
+                                is AvatarSource.Resource -> painterResource(avatar.resId)
+                                is AvatarSource.AvatarUri -> rememberAsyncImagePainter(Uri.parse(avatar.uri))
+                                else -> painterResource(R.drawable.main_fon)
+                            }
+                            Box(Modifier.size(80.dp)) {
+                                Image(
+                                    painter = painter,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize().padding(2.dp)
+                                )
+                                Image(
+                                    painter = painterResource(R.drawable.icon_back_ava),
+                                    contentDescription = null,
+                                    Modifier.fillMaxSize()
+                                )
+                            }
                             Text(
                                 text = winner.numberOfVictories.toString(),
-                                color = Color.Cyan,
+                                color = colorMetall!!,
                                 fontSize = 30.sp
                             )
                         }
@@ -179,26 +181,26 @@ class TotalScore : ComponentActivity() {
     @Composable
     private fun createButtons(context: Context, list: MutableList<Player>) {
         Row(
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 40.dp, end = 40.dp, top = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
-                confirmationDeletion(context, list)
+            confirmationDeletion(context, list)
             Box(
-                Modifier
+                modifier = Modifier
                     .pressClickEffect()
-                    .clickable(interactionSource = remember {
-                        MutableInteractionSource()
-                    }, indication = null, onClick = {
-                        finish()
-                    })
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { finish() }
+                    )
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.button_back),
                     contentDescription = null,
-                    Modifier
+                    modifier = Modifier
                         .height(80.dp)
                         .width(174.dp)
                 )
@@ -212,75 +214,107 @@ class TotalScore : ComponentActivity() {
         Text(
             text = text,
             style = TextStyle(
-                fontSize = 30.sp,
-                color = Color.Red,
-                shadow = Shadow(color = Color.Yellow, offset, blurRadius = 3.0f)
+                fontSize = 40.sp,
+                color = colorMetall!!,
+                shadow = Shadow(color = Color.Black, offset = offset, blurRadius = 1.0f)
             )
         )
     }
 
-
-
     @Composable
     private fun confirmationDeletion(context: Context, list: MutableList<Player>) {
-        val openDialog = remember {
-            mutableStateOf(false)
-        }
+        val openDialog = remember { mutableStateOf(false) }
         val buttonColor = ButtonDefaults.buttonColors(containerColor = Color.DarkGray, contentColor = Color.LightGray)
+
         Box(
-            Modifier
+            modifier = Modifier
                 .pressClickEffect()
-                .clickable(interactionSource = remember {
-                    MutableInteractionSource()
-                }, indication = null, onClick = {
-                    openDialog.value = true
-                })
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { openDialog.value = true }
+                )
         ) {
             Image(
                 painter = painterResource(id = R.drawable.button_cleaner),
                 contentDescription = null,
-                Modifier
+                modifier = Modifier
                     .height(80.dp)
                     .width(174.dp)
             )
         }
-
         if (openDialog.value) {
-            AlertDialog(onDismissRequest = {openDialog.value = false}, title = { Text(getString(R.string.alert_accept_mes))}, text = { Text(
-                text = getString(R.string.alert_mes), fontSize = 20.sp
-            )}, confirmButton = {
-                Button(onClick = {
-                    openDialog.value = false
-                    list.clear()
-                    winners.clear()
-                    val file = File(context.filesDir, WINNERS_LIST)
-                    if (file.exists()) {
-                        file.delete()
+            Dialog(
+                onDismissRequest = { openDialog.value = false },
+                properties = DialogProperties(usePlatformDefaultWidth = true)
+            ) {
+                val view = LocalView.current
+                LaunchedEffect(Unit) {
+                    val window = (view.parent as? DialogWindowProvider)?.window
+                    window?.let {
+                        WindowCompat.setDecorFitsSystemWindows(it, false)
+                        WindowInsetsControllerCompat(it, it.decorView).apply {
+                            hide(WindowInsetsCompat.Type.navigationBars())
+                            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                        }
                     }
-                }, colors = buttonColor, border = BorderStroke(1.dp, Color.LightGray)) {
-                    Text(text = getString(R.string.alert_clear))
                 }
-            },
-                dismissButton = {
-                    Button(onClick = {openDialog.value = false}, colors = buttonColor, border = BorderStroke(1.dp, Color.LightGray)) {
-                        Text(text = getString(R.string.alert_cancel))
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = Color.DarkGray,
+                    modifier = Modifier
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.alert_confirm),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.LightGray,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.alert_mes),
+                            fontSize = 20.sp,
+                            color = Color.LightGray
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = { openDialog.value = false },
+                                colors = buttonColor,
+                                border = BorderStroke(2.dp, Color.LightGray),
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                Text(text = stringResource(R.string.alert_cancel))
+                            }
+                            Button(
+                                onClick = {
+                                    openDialog.value = false
+                                    list.clear()
+                                    winners.clear()
+                                    val file = File(context.filesDir, WINNERS_LIST)
+                                    if (file.exists()) {
+                                        file.delete()
+                                    }
+                                },
+                                colors = buttonColor,
+                                border = BorderStroke(2.dp, Color.LightGray)
+                            ) {
+                                Text(text = stringResource(R.string.alert_clear))
+                            }
+                        }
                     }
-                },
-                containerColor = Color.DarkGray,
-                titleContentColor = Color.LightGray,
-                textContentColor = Color.LightGray,
-                iconContentColor = Color.LightGray
-                )
-
+                }
+            }
         }
-
     }
-
-
-
-
-
-
-
-
+    private fun getColor(): Color {
+       return Color(ContextCompat.getColor(this, R.color.metallic))
+    }
 }

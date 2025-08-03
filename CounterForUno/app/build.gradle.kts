@@ -56,8 +56,8 @@ dependencies {
     val appcompat_version = "1.7.1"
 
     implementation("androidx.appcompat:appcompat:$appcompat_version")
-    // For loading and tinting drawables on older versions of the platform
     implementation("androidx.appcompat:appcompat-resources:$appcompat_version")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

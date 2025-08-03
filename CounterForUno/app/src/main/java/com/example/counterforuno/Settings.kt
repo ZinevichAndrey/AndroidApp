@@ -1,12 +1,17 @@
 package com.example.counterforuno
 
+
 import android.content.Context
+import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
 
 
 object Settings{
@@ -16,6 +21,19 @@ object Settings{
 
     fun getCreatePlayerKey(): String {
         return CREATE_PLAYER_KEY
+    }
+    fun Bitmap.centerCropToSquare(targetSize: Int): Bitmap {
+        val dimension = minOf(width, height)
+        val xOffset = (width - dimension) / 2
+        val yOffset = (height - dimension) / 2
+
+        val squareBitmap = Bitmap.createBitmap(this, xOffset, yOffset, dimension, dimension)
+        return Bitmap.createScaledBitmap(squareBitmap, targetSize, targetSize, true)
+    }
+
+    @Composable
+     fun getConf(): Configuration {
+        return LocalConfiguration.current
     }
 
     fun getKeyWinner(): String {
@@ -48,6 +66,8 @@ object Settings{
             systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
         }
     }
+
+
 
 
 }
