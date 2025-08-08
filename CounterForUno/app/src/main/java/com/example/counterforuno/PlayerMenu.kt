@@ -129,7 +129,7 @@ class PlayerMenu:  ComponentActivity(){
             cameraLauncher.launch(uri)
         }
 
-        Box(Modifier.fillMaxSize().background(Color.Yellow)) {
+        Box(Modifier.fillMaxSize()) {
             Column(
                 Modifier
                     .fillMaxWidth()
