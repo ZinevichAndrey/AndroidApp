@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -37,11 +38,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -149,7 +152,7 @@ class PlayerMenu:  ComponentActivity(){
                         context.getString(R.string.plMenu_name),
                         textAlign = TextAlign.Center,
                         fontSize = 25.sp,
-                        color = Color.White
+                        color = colorResource(R.color.metallic)
                     )
                     TextField(
                         value = name,
@@ -160,7 +163,8 @@ class PlayerMenu:  ComponentActivity(){
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White
                         ),
-                        textStyle = TextStyle(fontSize = 30.sp)
+                        textStyle = TextStyle(fontSize = 30.sp),
+                        modifier = Modifier.clip(RoundedCornerShape(12.dp))
                     )
                 }
                 val width = Settings.getConf().screenWidthDp / 3
