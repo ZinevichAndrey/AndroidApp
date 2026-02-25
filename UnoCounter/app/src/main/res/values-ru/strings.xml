@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">CounterForUno</string>
+    <string name="start_game">Start</string>
+    <string name="alert_mes">Вы уверены, что хотите очистить список победителей?</string>
+    <string name="alert_clear">Очистить</string>
+    <string name="alert_cancel">Отмена</string>
+    <string name="plMenu_name">Вас зовут?</string>
+    <string name="alert_confirm">Подтвердить</string>
+    <string name="alert_delete">Удалить игрока</string>
+    <string name="alert_remove_mes">Вы уверены что хотите удалить этого игрока?</string>
+    <string name="createPlayer">Новый игрок</string>
+    <string name="emptyAvatar">Пожалуйсто, выберите иконку и имя</string>
+    <string name="wins">Побед</string>
+    <string name="total_score_title">Всего побед</string>
+
+</resources>
