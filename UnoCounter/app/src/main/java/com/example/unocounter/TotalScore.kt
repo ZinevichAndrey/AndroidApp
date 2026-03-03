@@ -62,14 +62,16 @@ class TotalScore : ComponentActivity() {
                 )
                 .padding(10.dp)
         ) {
-            Text(
-                text = stringResource(R.string.total_score_title),
-                fontSize = 40.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Yellow,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+//            Text(
+//                text = stringResource(R.string.total_score_title),
+//                fontSize = 40.sp,
+//                fontWeight = FontWeight.Bold,
+//                color = Color.Yellow,
+//                modifier = Modifier.fillMaxWidth(),
+//                textAlign = TextAlign.Center
+//            )
+            Image(painterResource(R.drawable.winners_inscription), contentDescription = null,
+                Modifier.align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(20.dp))
             LazyColumn(
                 modifier = Modifier

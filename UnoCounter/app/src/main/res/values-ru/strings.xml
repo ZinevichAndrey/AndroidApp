@@ -11,6 +11,6 @@
     <string name="createPlayer">Новый игрок</string>
     <string name="emptyAvatar">Пожалуйсто, выберите иконку и имя</string>
     <string name="wins">Побед</string>
-    <string name="total_score_title">Всего побед</string>
+
 
 </resources>

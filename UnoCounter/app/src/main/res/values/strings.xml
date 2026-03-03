@@ -10,6 +10,6 @@
     <string name="alert_remove_mes">Are you sure you want to remove this player?</string>
     <string name="createPlayer">New Player</string>
     <string name="emptyAvatar">Please, choose avatar and name</string>
-    <string name="wins">Побед</string>
-    <string name="total_score_title">Всего побед</string>
+    <string name="wins">Wins</string>
+
 </resources>
