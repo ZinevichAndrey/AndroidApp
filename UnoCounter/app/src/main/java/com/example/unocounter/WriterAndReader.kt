@@ -10,7 +10,7 @@ object WriterAndReader {
         file.writeText("")
         players.forEach {
             val avatarString = when (val avatar = it.avatar) {
-                is AvatarSource.Resource -> "res:${avatar.resId}"
+                is AvatarSource.Resource -> "res:${avatar.resName}"  // Изменено: resId -> resName
                 is AvatarSource.AvatarUri -> "uri:${avatar.uri}"
             }
             val line = "${it.id}|${it.name}|$avatarString|${it.numberOfVictories}\n"
@@ -29,9 +29,11 @@ object WriterAndReader {
             val id = parts[0]
             val name = parts[1]
             val avatarRaw = parts[2]
-            val victories = parts[3].toInt()
+            val victories = parts[3].toIntOrNull() ?: 0
+
             val avatar = if (avatarRaw.startsWith("res:")) {
-                AvatarSource.Resource(avatarRaw.removePrefix("res:").toInt())
+                // Изменено: теперь сохраняем имя ресурса (String), а не ID (Int)
+                AvatarSource.Resource(avatarRaw.removePrefix("res:"))
             } else {
                 AvatarSource.AvatarUri(avatarRaw.removePrefix("uri:"))
             }

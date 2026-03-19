@@ -1,7 +1,6 @@
 package com.example.unocounter
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,10 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.delay
 import java.io.File
 
@@ -62,16 +59,10 @@ class TotalScore : ComponentActivity() {
                 )
                 .padding(10.dp)
         ) {
-//            Text(
-//                text = stringResource(R.string.total_score_title),
-//                fontSize = 40.sp,
-//                fontWeight = FontWeight.Bold,
-//                color = Color.Yellow,
-//                modifier = Modifier.fillMaxWidth(),
-//                textAlign = TextAlign.Center
-//            )
-            Image(painterResource(R.drawable.winners_inscription), contentDescription = null,
-                Modifier.align(Alignment.CenterHorizontally))
+            Image(
+                painterResource(R.drawable.winners_inscription), contentDescription = null,
+                Modifier.align(Alignment.CenterHorizontally)
+            )
             Spacer(modifier = Modifier.height(20.dp))
             LazyColumn(
                 modifier = Modifier
@@ -153,7 +144,7 @@ class TotalScore : ComponentActivity() {
                             showDialog = false
                             players.clear()
                             val file = File(context.filesDir, FILE_NAME)
-                            if (file.exists()){
+                            if (file.exists()) {
                                 file.delete()
                             }
                         }
@@ -186,10 +177,8 @@ class TotalScore : ComponentActivity() {
                 .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val painter = when (val avatar = player.avatar) {
-                is AvatarSource.Resource -> painterResource(avatar.resId)
-                is AvatarSource.AvatarUri -> rememberAsyncImagePainter(Uri.parse(avatar.uri))
-            }
+            // Используем общую функцию
+            val painter = rememberAvatarPainter(player.avatar)
             Box(
                 Modifier
                     .size(80.dp)

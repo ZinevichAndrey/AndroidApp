@@ -1,16 +1,17 @@
 package com.example.unocounter
 
-
 import android.os.Parcel
 import android.os.Parcelable
 
 sealed class AvatarSource : Parcelable {
 
-    class Resource(val resId: Int) : AvatarSource(), Parcelable {
-        constructor(parcel: Parcel) : this(parcel.readInt())
+    class Resource(val resName: String) : AvatarSource(), Parcelable {
+        constructor(parcel: Parcel) : this(parcel.readString() ?: "")
+
         override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeInt(resId)
+            parcel.writeString(resName)
         }
+
         override fun describeContents(): Int = 0
 
         companion object CREATOR : Parcelable.Creator<Resource> {
@@ -21,9 +22,11 @@ sealed class AvatarSource : Parcelable {
 
     class AvatarUri(val uri: String) : AvatarSource(), Parcelable {
         constructor(parcel: Parcel) : this(parcel.readString() ?: "")
+
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             parcel.writeString(uri)
         }
+
         override fun describeContents(): Int = 0
 
         companion object CREATOR : Parcelable.Creator<AvatarUri> {
@@ -49,7 +52,7 @@ sealed class AvatarSource : Parcelable {
         when (this) {
             is Resource -> {
                 parcel.writeInt(0)
-                parcel.writeInt(resId)
+                parcel.writeString(resName)
             }
             is AvatarUri -> {
                 parcel.writeInt(1)
@@ -57,4 +60,20 @@ sealed class AvatarSource : Parcelable {
             }
         }
     }
+
+    override fun describeContents(): Int = 0
+}
+
+object AvatarResources {
+    private val avatarMap = mapOf(
+        "dog_ava" to R.drawable.dog_ava,
+        "rat_ava" to R.drawable.rat_ava,
+        "spider_ava" to R.drawable.spider_ava,
+        "toad_ava" to R.drawable.toad_ava,
+        "cat_ava" to R.drawable.cat_ava,
+        "bird_ava" to R.drawable.bird_ava,
+        "main_fon" to R.drawable.main_fon
+    )
+
+    fun getResId(name: String): Int = avatarMap[name] ?: R.drawable.main_fon
 }

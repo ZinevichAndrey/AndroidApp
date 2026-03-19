@@ -1,7 +1,6 @@
 package com.example.unocounter
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -28,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 
 class GameMenu : ComponentActivity() {
     private val playerStatsList = mutableListOf<PlayerStats>()
@@ -39,6 +37,7 @@ class GameMenu : ComponentActivity() {
 
         setContent {
             Settings.hideActionBar(this)
+
             val loadedPlayers = WriterAndReader.loadPlayers(this, PLAYERS_FILE)
             playerStatsList.clear()
             playerStatsList.addAll(loadedPlayers)
@@ -99,6 +98,16 @@ class GameMenu : ComponentActivity() {
         val playerStats = gamePlayer.playerStats
         val context = LocalContext.current
         var showDeleteDialog by remember { mutableStateOf(false) }
+        val scannerLauncher =
+            rememberLauncherForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    val score = result.data?.getIntExtra("score", 0) ?: 0
+                    gamePlayer.score += score
+                    onScoreChanged()
+                }
+            }
 
         Column(
             modifier
@@ -144,10 +153,8 @@ class GameMenu : ComponentActivity() {
                         .size(170.dp)
                         .clickable { showDeleteDialog = true }
                 ) {
-                    val painter = when (val avatar = playerStats.avatar) {
-                        is AvatarSource.Resource -> painterResource(avatar.resId)
-                        is AvatarSource.AvatarUri -> rememberAsyncImagePainter(Uri.parse(avatar.uri))
-                    }
+                    // Используем общую функцию
+                    val painter = rememberAvatarPainter(playerStats.avatar)
                     Image(
                         painter = painter,
                         contentDescription = null,
@@ -169,8 +176,9 @@ class GameMenu : ComponentActivity() {
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) {
-                            gamePlayer.score++
-                            onScoreChanged()
+                            scannerLauncher.launch(
+                                Intent(context, CardScannerActivity::class.java)
+                            )
                         }
                 ) {
                     Image(

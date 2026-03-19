@@ -34,7 +34,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import coil.compose.rememberAsyncImagePainter
 import com.example.unocounter.Settings.centerCropToSquare
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,9 +42,10 @@ import java.io.File
 
 class PlayerMenu : ComponentActivity() {
 
+    // Изменено: теперь список имён ресурсов (String)
     private val avatarList = listOf(
-        R.drawable.dog_ava, R.drawable.rat_ava, R.drawable.spider_ava,
-        R.drawable.toad_ava, R.drawable.cat_ava, R.drawable.bird_ava
+        "dog_ava", "rat_ava", "spider_ava",
+        "toad_ava", "cat_ava", "bird_ava"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +62,8 @@ class PlayerMenu : ComponentActivity() {
         val density = LocalDensity.current
         val scope = rememberCoroutineScope()
         var name by remember { mutableStateOf("") }
-        var avatarSource by remember { mutableStateOf<AvatarSource>(AvatarSource.Resource(R.drawable.main_fon)) }
+        // Изменено: начальное значение с именем ресурса
+        var avatarSource by remember { mutableStateOf<AvatarSource>(AvatarSource.Resource("main_fon")) }
         val imageUri = remember { mutableStateOf<Uri?>(null) }
         val widthDp = Settings.getConf().screenWidthDp / 3
         val cameraLauncher = rememberLauncherForActivityResult(
@@ -103,6 +104,7 @@ class PlayerMenu : ComponentActivity() {
             imageUri.value = uri
             cameraLauncher.launch(uri)
         }
+
         Box(Modifier.fillMaxSize()) {
             Column(
                 Modifier
@@ -113,10 +115,14 @@ class PlayerMenu : ComponentActivity() {
                     text = context.getString(R.string.createPlayer),
                     fontSize = 40.sp,
                     color = Color.Yellow,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp)
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 10.dp)
                 )
                 Row(
-                    Modifier.fillMaxWidth().padding(top = 25.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 25.dp),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -140,12 +146,14 @@ class PlayerMenu : ComponentActivity() {
                     )
                 }
                 val width = Settings.getConf().screenWidthDp / 3
-                Row(Modifier.fillMaxWidth().padding(top = 10.dp), Arrangement.Center) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp), Arrangement.Center
+                ) {
                     Box(Modifier.size(width.dp), contentAlignment = Alignment.Center) {
-                        val painter = when (val avatar = avatarSource) {
-                            is AvatarSource.Resource -> painterResource(avatar.resId)
-                            is AvatarSource.AvatarUri -> rememberAsyncImagePainter(Uri.parse(avatar.uri))
-                        }
+                        // Используем общую функцию
+                        val painter = rememberAvatarPainter(avatarSource)
                         Image(
                             painter = painter,
                             contentDescription = null,
@@ -159,8 +167,8 @@ class PlayerMenu : ComponentActivity() {
                         )
                     }
                 }
-                ShowAvatarList(avatarList) { selectedResId ->
-                    avatarSource = AvatarSource.Resource(selectedResId)
+                ShowAvatarList(avatarList) { selectedResName ->
+                    avatarSource = AvatarSource.Resource(selectedResName)
                 }
                 Image(
                     painter = painterResource(R.drawable.photo_ava),
@@ -195,7 +203,8 @@ class PlayerMenu : ComponentActivity() {
                         .width(174.dp)
                         .clickable {
                             if (name.isNotBlank() &&
-                                (avatarSource !is AvatarSource.Resource || (avatarSource as AvatarSource.Resource).resId != R.drawable.main_fon)
+                                (avatarSource !is AvatarSource.Resource ||
+                                        (avatarSource as AvatarSource.Resource).resName != "main_fon")
                             ) {
                                 val playerStats = PlayerStats(
                                     name = name,
@@ -204,7 +213,11 @@ class PlayerMenu : ComponentActivity() {
                                 )
                                 onCreate(playerStats)
                             } else {
-                                Toast.makeText(context, getString(R.string.emptyAvatar), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    getString(R.string.emptyAvatar),
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                 )
@@ -220,18 +233,25 @@ class PlayerMenu : ComponentActivity() {
     }
 
     @Composable
-    private fun ShowAvatarList(list: List<Int>, onAvatarSelected: (Int) -> Unit) {
+    private fun ShowAvatarList(list: List<String>, onAvatarSelected: (String) -> Unit) {
         val rows = list.chunked(3)
         val width = Settings.getConf().screenWidthDp / 3
         Column {
             rows.forEach { rowItems ->
-                Row(Modifier.fillMaxWidth().padding(top = 5.dp), horizontalArrangement = Arrangement.SpaceAround) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
                     rowItems.forEach { item ->
                         Box(Modifier.size(width.dp)) {
                             Image(
-                                painter = painterResource(item),
+                                painter = painterResource(AvatarResources.getResId(item)),
                                 contentDescription = null,
-                                modifier = Modifier.fillMaxSize().padding(5.dp)
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(5.dp)
                                     .clickable { onAvatarSelected(item) },
                                 contentScale = ContentScale.Crop
                             )
