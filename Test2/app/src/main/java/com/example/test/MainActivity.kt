@@ -7,7 +7,14 @@ import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.YuvImage
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.OptIn
@@ -28,44 +35,146 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private lateinit var textView: TextView
+    private lateinit var lastCardTextView: TextView
+    private lateinit var scanButton: Button
+    private lateinit var resetButton: Button
+    private lateinit var finishButton: Button
+    private lateinit var removeLastButton: Button
     private lateinit var detector: YoloTfliteDetector
-    private var frameCount = 0
-    private var detectionBuffer: List<List<YoloTfliteDetector.Detection>> = emptyList()  // ← ИСПРАВЛЕНО
-    private val bufferSize = 5
-    private var confirmedCards = mutableListOf<YoloTfliteDetector.Detection>()
+
+    private var currentBitmap: Bitmap? = null
+    private var isScanning = false
+    private val scannedCards = mutableListOf<YoloTfliteDetector.Detection>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(TAG, "=== ПРИЛОЖЕНИЕ ЗАПУЩЕНО ===")
-
-        // Создаём UI
+        // UI
         previewView = PreviewView(this)
-        textView = TextView(this).apply {
-            text = "Ожидание..."
+
+        // Заголовок
+        val titleTextView = TextView(this).apply {
+            text = "UNO СЧЁТЧИК ОЧКОВ"
+            textSize = 22f
             setTextColor(0xFFFFFFFF.toInt())
             setBackgroundColor(0x80000000.toInt())
-            setPadding(50, 50, 50, 50)
-            textSize = 16f
+            gravity = Gravity.CENTER
+            setPadding(16, 16, 16, 16)
         }
 
-        val layout = android.widget.FrameLayout(this)
-        layout.addView(previewView, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-        ))
-        layout.addView(textView, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-            gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
-            topMargin = 100
-        })
+        // Экран камеры с фиксированной высотой
+        val cameraContainer = android.widget.FrameLayout(this).apply {
+            addView(previewView, android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+            ))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1.5f  // Камера занимает больше места
+            )
+        }
 
-        setContentView(layout)
+        // Статус и последняя карта
+        lastCardTextView = TextView(this).apply {
+            text = "📷 Наведите камеру на карту"
+            textSize = 18f
+            setTextColor(0xFFFFFF00.toInt())
+            setBackgroundColor(0x88000000.toInt())
+            gravity = Gravity.CENTER
+            setPadding(16, 16, 16, 16)
+        }
+
+        // Кнопки
+        scanButton = Button(this).apply {
+            text = "🔍 СКАНИРОВАТЬ"
+            textSize = 20f
+            setOnClickListener { performDetection() }
+        }
+
+        removeLastButton = Button(this).apply {
+            text = "🗑️ УДАЛИТЬ ПОСЛЕДНЮЮ"
+            textSize = 18f
+            setOnClickListener { removeLastCard() }
+        }
+
+        resetButton = Button(this).apply {
+            text = "🔄 СБРОСИТЬ ВСЁ"
+            textSize = 18f
+            setOnClickListener { resetAll() }
+        }
+
+        finishButton = Button(this).apply {
+            text = "✅ ЗАВЕРШИТЬ"
+            textSize = 20f
+            setOnClickListener { finishScanning() }
+        }
+
+        // Список отсканированных карт (ScrollView)
+        textView = TextView(this).apply {
+            text = "Нет карт"
+            setTextColor(0xFFFFFFFF.toInt())
+            setBackgroundColor(0x88000000.toInt())
+            setPadding(16, 16, 16, 16)
+            textSize = 14f
+        }
+
+        val scrollView = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                0.8f  // Список карт занимает фиксированную долю места
+            )
+            addView(textView)
+        }
+
+        // Кнопки в два ряда
+        val buttonRow1 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            addView(scanButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(finishButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        val buttonRow2 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            addView(removeLastButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(resetButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        }
+
+        val buttonsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            addView(buttonRow1)
+            addView(buttonRow2)
+        }
+
+        val mainLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            addView(titleTextView)
+            addView(cameraContainer)
+            addView(lastCardTextView)
+            addView(buttonsContainer)
+            addView(scrollView)
+        }
+
+        setContentView(mainLayout)
 
         detector = YoloTfliteDetector(this)
-        Log.d(TAG, "Детектор инициализирован")
 
         if (checkPermission()) {
             startCamera()
@@ -75,35 +184,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermission(): Boolean {
-        val hasPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-        Log.d(TAG, "Разрешение на камеру: $hasPermission")
-        return hasPermission
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestPermission() {
-        Log.d(TAG, "Запрос разрешения на камеру")
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 100)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "✅ Разрешение получено")
             startCamera()
         } else {
-            Log.e(TAG, "❌ Разрешение не получено")
             Toast.makeText(this, "Камера не разрешена", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun startCamera() {
-        Log.d(TAG, "Запуск камеры...")
         val cameraExecutor = Executors.newSingleThreadExecutor()
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
-            Log.d(TAG, "✅ CameraProvider получен")
 
             val preview = Preview.Builder().build()
             preview.setSurfaceProvider(previewView.surfaceProvider)
@@ -113,93 +215,146 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
             imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                frameCount++
-                val bitmap = imageProxyToBitmap(imageProxy)
-                if (bitmap != null) {
-                    val results = detector.detect(bitmap)
-
-                    // Логируем каждый кадр
-                    if (results.isNotEmpty()) {
-                        Log.d(TAG, "📸 Кадр #$frameCount | Найдено карт: ${results.size}")
-                        results.forEach { detection ->
-                            Log.d(TAG, "   Карта: ${detection.clsName} | Уверенность: ${(detection.conf * 100).toInt()}% | Позиция: (${detection.x.toInt()}, ${detection.y.toInt()})")
-                        }
-                    }
-
-                    // Стабилизация детекций (ИСПРАВЛЕНО)
-                    detectionBuffer = (detectionBuffer + listOf(results)).takeLast(bufferSize)
-
-                    if (detectionBuffer.size == bufferSize) {
-                        val stableCards = getStableCards()
-                        if (stableCards.isNotEmpty()) {
-                            confirmedCards = stableCards.toMutableList()
-                            val totalScore = confirmedCards.sumOf { CardMapping.getScore(it.clsName) }
-                            Log.d(TAG, "🎯 ПОДТВЕРЖДЁННЫЕ КАРТЫ: ${confirmedCards.size}")
-                            confirmedCards.forEach {
-                                Log.d(TAG, "   ${it.clsName} | Уверенность: ${(it.conf * 100).toInt()}% | Очки: ${CardMapping.getScore(it.clsName)}")
-                            }
-                            Log.d(TAG, "💰 ОБЩАЯ СУММА ОЧКОВ: $totalScore")
-                        }
-                    }
-
-                    runOnUiThread {
-                        updateUI(results, confirmedCards)
-                    }
-                }
+                currentBitmap = imageProxyToBitmap(imageProxy)
                 imageProxy.close()
             }
 
             cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis)
 
-            Toast.makeText(this, "Камера работает!", Toast.LENGTH_SHORT).show()
-            Log.d(TAG, "✅ Камера запущена, ожидание кадров...")
+            showBigToast("✅ Камера готова")
+            Log.d(TAG, "✅ Камера запущена")
 
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun getStableCards(): List<YoloTfliteDetector.Detection> {
-        val allCards = detectionBuffer.flatten()
-        val grouped = allCards.groupBy { it.cls }
-
-        val stable = mutableListOf<YoloTfliteDetector.Detection>()
-        for ((_, cards) in grouped) {
-            if (cards.size >= bufferSize * 0.7) {
-                val bestCard = cards.maxByOrNull { it.conf }
-                if (bestCard != null) {
-                    stable.add(bestCard)
-                }
-            }
-        }
-        return stable
+    private fun showBigToast(message: String) {
+        val toast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
+        toast.setGravity(Gravity.CENTER, 0, 0)
+        toast.show()
     }
 
-    private fun updateUI(temporary: List<YoloTfliteDetector.Detection>, confirmed: List<YoloTfliteDetector.Detection>) {
+    private fun performDetection() {
+        if (isScanning) return
+
+        val bitmap = currentBitmap
+        if (bitmap == null) {
+            showBigToast("❌ Нет изображения")
+            return
+        }
+
+        isScanning = true
+        scanButton.isEnabled = false
+        lastCardTextView.text = "🔍 СКАНИРОВАНИЕ..."
+
+        Thread {
+            try {
+                val startTime = System.currentTimeMillis()
+                val results = detector.detect(bitmap)
+                val elapsed = System.currentTimeMillis() - startTime
+
+                val bestCard = results.maxByOrNull { it.conf }
+
+                Handler(Looper.getMainLooper()).post {
+                    if (bestCard != null && bestCard.conf > 0.5f) {
+                        scannedCards.add(bestCard)
+                        updateUI()
+
+                        val score = CardMapping.getScore(bestCard.clsName)
+                        showBigToast("✅ ${bestCard.clsName} +$score очков")
+
+                        lastCardTextView.text = "📷 ПОСЛЕДНЯЯ: ${bestCard.clsName} (${(bestCard.conf * 100).toInt()}%)"
+                        Log.d(TAG, "✅ ${bestCard.clsName} | ${(bestCard.conf * 100).toInt()}% | ${elapsed}ms")
+                    } else {
+                        showBigToast("❌ КАРТА НЕ РАСПОЗНАНА")
+                        lastCardTextView.text = "📷 Карта не распознана"
+                        Log.d(TAG, "❌ Не распознано")
+                    }
+                    isScanning = false
+                    scanButton.isEnabled = true
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка: ${e.message}")
+                Handler(Looper.getMainLooper()).post {
+                    showBigToast("❌ Ошибка сканирования")
+                    isScanning = false
+                    scanButton.isEnabled = true
+                }
+            }
+        }.start()
+    }
+
+    private fun removeLastCard() {
+        if (scannedCards.isNotEmpty()) {
+            val removed = scannedCards.removeAt(scannedCards.size - 1)
+            updateUI()
+            showBigToast("🗑️ Удалена: ${removed.clsName}")
+            if (scannedCards.isNotEmpty()) {
+                lastCardTextView.text = "📷 ПОСЛЕДНЯЯ: ${scannedCards.last().clsName}"
+            } else {
+                lastCardTextView.text = "📷 Нет карт"
+            }
+        } else {
+            showBigToast("⚠️ Нет карт для удаления")
+        }
+    }
+
+    private fun updateUI() {
         val sb = StringBuilder()
-        sb.append("═══ UNO СКАНЕР ═══\n")
-        sb.append("📊 Кадров: $frameCount\n")
-        sb.append("────────────────\n")
-        sb.append("🃏 ВРЕМЕННЫЕ КАРТЫ:\n")
-        if (temporary.isEmpty()) {
-            sb.append("   Нет\n")
+
+        if (scannedCards.isEmpty()) {
+            sb.append("═══════════════════════════\n")
+            sb.append("📋 СПИСОК КАРТ\n")
+            sb.append("═══════════════════════════\n\n")
+            sb.append("Пока нет карт\n\n")
+            sb.append("1. Поднесите карту к камере\n")
+            sb.append("2. Нажмите СКАНИРОВАТЬ\n")
+            sb.append("3. Повторите для следующей")
         } else {
-            temporary.forEach {
-                sb.append("   ${it.clsName} (${(it.conf * 100).toInt()}%)\n")
+            sb.append("═══════════════════════════\n")
+            sb.append("📋 СПИСОК КАРТ (${scannedCards.size})\n")
+            sb.append("═══════════════════════════\n\n")
+
+            scannedCards.forEachIndexed { index, card ->
+                val score = CardMapping.getScore(card.clsName)
+                sb.append("${index + 1}. ${card.clsName}\n")
+                sb.append("   💰 $score очков\n")
+                if (index < scannedCards.size - 1) sb.append("   ───────────\n")
             }
+
+            val totalScore = scannedCards.sumOf { CardMapping.getScore(it.clsName) }
+            sb.append("\n═══════════════════════════\n")
+            sb.append("💰 ВСЕГО ОЧКОВ: $totalScore\n")
         }
-        sb.append("────────────────\n")
-        sb.append("✅ ПОДТВЕРЖДЁННЫЕ:\n")
-        if (confirmed.isEmpty()) {
-            sb.append("   Нет\n")
-        } else {
-            confirmed.forEach {
-                val score = CardMapping.getScore(it.clsName)
-                sb.append("   ${it.clsName} | ${score} очков\n")
-            }
-            val totalScore = confirmed.sumOf { CardMapping.getScore(it.clsName) }
-            sb.append("────────────────\n")
-            sb.append("💰 ОЧКИ: $totalScore\n")
-        }
+
         textView.text = sb.toString()
+        // Прокручиваем ScrollView вниз, чтобы показать последнюю карту
+        (textView.parent as? ScrollView)?.post {
+            (textView.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
+        }
+    }
+
+    private fun finishScanning() {
+        if (scannedCards.isEmpty()) {
+            showBigToast("⚠️ Нет отсканированных карт")
+            return
+        }
+
+        val totalScore = scannedCards.sumOf { CardMapping.getScore(it.clsName) }
+        val cardList = scannedCards.joinToString(", ") { it.clsName }
+
+        showBigToast("🏆 ИТОГО: $totalScore очков (${scannedCards.size} карт)")
+
+        Log.d(TAG, "=== ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ===")
+        Log.d(TAG, "Карты: $cardList")
+        Log.d(TAG, "Очки: $totalScore")
+    }
+
+    private fun resetAll() {
+        scannedCards.clear()
+        updateUI()
+        lastCardTextView.text = "📷 Наведите камеру на карту"
+        showBigToast("🔄 Все карты удалены")
     }
 
     @OptIn(ExperimentalGetImage::class)
@@ -232,7 +387,7 @@ class MainActivity : AppCompatActivity() {
 
             Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
         } catch (e: Exception) {
-            Log.e(TAG, "Ошибка конвертации: ${e.message}")
+            Log.e(TAG, "Ошибка: ${e.message}")
             null
         }
     }
@@ -240,6 +395,5 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         detector.close()
-        Log.d(TAG, "=== ПРИЛОЖЕНИЕ ОСТАНОВЛЕНО ===")
     }
 }
