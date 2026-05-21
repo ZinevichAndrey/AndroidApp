@@ -11,8 +11,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.Gravity
-import android.view.ViewGroup
+import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var finishButton: Button
     private lateinit var removeLastButton: Button
     private lateinit var detector: YoloTfliteDetector
+    private lateinit var centerFrameView: View
 
     private var currentBitmap: Bitmap? = null
     private var isScanning = false
@@ -48,11 +50,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setupUI()
+        detector = YoloTfliteDetector(this)
+        if (checkPermission()) startCamera() else requestPermission()
+    }
 
-        // UI
+    private fun setupUI() {
         previewView = PreviewView(this)
 
-        // Заголовок
         val titleTextView = TextView(this).apply {
             text = "UNO СЧЁТЧИК ОЧКОВ"
             textSize = 22f
@@ -62,30 +67,45 @@ class MainActivity : AppCompatActivity() {
             setPadding(16, 16, 16, 16)
         }
 
-        // Экран камеры с фиксированной высотой
-        val cameraContainer = android.widget.FrameLayout(this).apply {
-            addView(previewView, android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-            ))
+        val cameraContainer = FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1.5f  // Камера занимает больше места
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1.5f
             )
+            addView(previewView, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            ))
         }
 
-        // Статус и последняя карта
+        centerFrameView = object : View(this) {
+            private val paint = android.graphics.Paint().apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 8f
+                color = android.graphics.Color.GREEN
+            }
+
+            override fun onDraw(canvas: android.graphics.Canvas) {
+                super.onDraw(canvas)
+                val size = width.coerceAtMost(height) * 0.5f
+                val left = (width - size) / 2
+                val top = (height - size) / 2
+                canvas.drawRect(left, top, left + size, top + size, paint)
+            }
+        }
+        cameraContainer.addView(centerFrameView, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+
         lastCardTextView = TextView(this).apply {
-            text = "📷 Наведите камеру на карту"
-            textSize = 18f
+            text = "🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ\n👇 НАЖМИТЕ СКАНИРОВАТЬ"
+            textSize = 14f
             setTextColor(0xFFFFFF00.toInt())
             setBackgroundColor(0x88000000.toInt())
             gravity = Gravity.CENTER
             setPadding(16, 16, 16, 16)
         }
 
-        // Кнопки
         scanButton = Button(this).apply {
             text = "🔍 СКАНИРОВАТЬ"
             textSize = 20f
@@ -110,7 +130,6 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { finishScanning() }
         }
 
-        // Список отсканированных карт (ScrollView)
         textView = TextView(this).apply {
             text = "Нет карт"
             setTextColor(0xFFFFFFFF.toInt())
@@ -121,50 +140,31 @@ class MainActivity : AppCompatActivity() {
 
         val scrollView = ScrollView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                0.8f  // Список карт занимает фиксированную долю места
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 0.8f
             )
             addView(textView)
         }
 
-        // Кнопки в два ряда
         val buttonRow1 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
             addView(scanButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             addView(finishButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
         val buttonRow2 = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
             addView(removeLastButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             addView(resetButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
 
         val buttonsContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
             addView(buttonRow1)
             addView(buttonRow2)
         }
 
         val mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
             addView(titleTextView)
             addView(cameraContainer)
             addView(lastCardTextView)
@@ -173,14 +173,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContentView(mainLayout)
-
-        detector = YoloTfliteDetector(this)
-
-        if (checkPermission()) {
-            startCamera()
-        } else {
-            requestPermission()
-        }
     }
 
     private fun checkPermission(): Boolean {
@@ -202,11 +194,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun startCamera() {
         val cameraExecutor = Executors.newSingleThreadExecutor()
-
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
-
             val preview = Preview.Builder().build()
             preview.setSurfaceProvider(previewView.surfaceProvider)
 
@@ -218,26 +208,22 @@ class MainActivity : AppCompatActivity() {
                 currentBitmap = imageProxyToBitmap(imageProxy)
                 imageProxy.close()
             }
-
             cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis)
-
             showBigToast("✅ Камера готова")
-            Log.d(TAG, "✅ Камера запущена")
-
         }, ContextCompat.getMainExecutor(this))
     }
 
     private fun showBigToast(message: String) {
-        val toast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
-        toast.setGravity(Gravity.CENTER, 0, 0)
-        toast.show()
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).apply {
+            setGravity(Gravity.CENTER, 0, 0)
+            show()
+        }
     }
 
     private fun performDetection() {
         if (isScanning) return
 
-        val bitmap = currentBitmap
-        if (bitmap == null) {
+        val bitmap = currentBitmap ?: run {
             showBigToast("❌ Нет изображения")
             return
         }
@@ -248,31 +234,30 @@ class MainActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val startTime = System.currentTimeMillis()
                 val results = detector.detect(bitmap)
-                val elapsed = System.currentTimeMillis() - startTime
-
                 val bestCard = results.maxByOrNull { it.conf }
 
                 Handler(Looper.getMainLooper()).post {
-                    if (bestCard != null && bestCard.conf > 0.5f) {
+                    if (bestCard != null && bestCard.conf > 0.08f) {
+                        Log.d(TAG, "=== РАСПОЗНАНА КАРТА ===")
+                        Log.d(TAG, "ID: ${bestCard.cls}")
+                        Log.d(TAG, "Название: ${bestCard.clsName}")
+                        Log.d(TAG, "Уверенность: ${(bestCard.conf * 100).toInt()}%")
+
+                        // Получаем очки по ID (быстро)
+                        val score = CardMapping.getScoreById(bestCard.cls)
+
                         scannedCards.add(bestCard)
                         updateUI()
-
-                        val score = CardMapping.getScore(bestCard.clsName)
                         showBigToast("✅ ${bestCard.clsName} +$score очков")
-
-                        lastCardTextView.text = "📷 ПОСЛЕДНЯЯ: ${bestCard.clsName} (${(bestCard.conf * 100).toInt()}%)"
-                        Log.d(TAG, "✅ ${bestCard.clsName} | ${(bestCard.conf * 100).toInt()}% | ${elapsed}ms")
+                        lastCardTextView.text = "📷 ПОСЛЕДНЯЯ: ${bestCard.clsName}"
                     } else {
-                        showBigToast("❌ КАРТА НЕ РАСПОЗНАНА")
-                        lastCardTextView.text = "📷 Карта не распознана"
-                        Log.d(TAG, "❌ Не распознано")
+                        showBigToast("❌ КАРТА НЕ РАСПОЗНАНА\nПоместите карту в рамку")
+                        lastCardTextView.text = "🎯 Поместите карту в рамку"
                     }
                     isScanning = false
                     scanButton.isEnabled = true
                 }
-
             } catch (e: Exception) {
                 Log.e(TAG, "Ошибка: ${e.message}")
                 Handler(Looper.getMainLooper()).post {
@@ -292,7 +277,7 @@ class MainActivity : AppCompatActivity() {
             if (scannedCards.isNotEmpty()) {
                 lastCardTextView.text = "📷 ПОСЛЕДНЯЯ: ${scannedCards.last().clsName}"
             } else {
-                lastCardTextView.text = "📷 Нет карт"
+                lastCardTextView.text = "🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ\n👇 НАЖМИТЕ СКАНИРОВАТЬ"
             }
         } else {
             showBigToast("⚠️ Нет карт для удаления")
@@ -307,7 +292,7 @@ class MainActivity : AppCompatActivity() {
             sb.append("📋 СПИСОК КАРТ\n")
             sb.append("═══════════════════════════\n\n")
             sb.append("Пока нет карт\n\n")
-            sb.append("1. Поднесите карту к камере\n")
+            sb.append("1. Поместите карту в рамку\n")
             sb.append("2. Нажмите СКАНИРОВАТЬ\n")
             sb.append("3. Повторите для следующей")
         } else {
@@ -316,19 +301,22 @@ class MainActivity : AppCompatActivity() {
             sb.append("═══════════════════════════\n\n")
 
             scannedCards.forEachIndexed { index, card ->
-                val score = CardMapping.getScore(card.clsName)
+                // Получаем очки по ID (быстро)
+                val score = CardMapping.getScoreById(card.cls)
                 sb.append("${index + 1}. ${card.clsName}\n")
                 sb.append("   💰 $score очков\n")
                 if (index < scannedCards.size - 1) sb.append("   ───────────\n")
             }
 
-            val totalScore = scannedCards.sumOf { CardMapping.getScore(it.clsName) }
+            // Подсчет суммы через ID
+            val totalScore = scannedCards.sumOf { CardMapping.getScoreById(it.cls) }
             sb.append("\n═══════════════════════════\n")
             sb.append("💰 ВСЕГО ОЧКОВ: $totalScore\n")
+            sb.append("═══════════════════════════\n")
+            sb.append("🎨 Цвет и тип карты показаны выше")
         }
 
         textView.text = sb.toString()
-        // Прокручиваем ScrollView вниз, чтобы показать последнюю карту
         (textView.parent as? ScrollView)?.post {
             (textView.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
         }
@@ -340,10 +328,10 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val totalScore = scannedCards.sumOf { CardMapping.getScore(it.clsName) }
+        val totalScore = scannedCards.sumOf { CardMapping.getScoreById(it.cls) }
         val cardList = scannedCards.joinToString(", ") { it.clsName }
 
-        showBigToast("🏆 ИТОГО: $totalScore очков (${scannedCards.size} карт)")
+        showBigToast("🏆 ИТОГО: $totalScore очков\n📋 ${scannedCards.size} карт")
 
         Log.d(TAG, "=== ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ===")
         Log.d(TAG, "Карты: $cardList")
@@ -353,7 +341,7 @@ class MainActivity : AppCompatActivity() {
     private fun resetAll() {
         scannedCards.clear()
         updateUI()
-        lastCardTextView.text = "📷 Наведите камеру на карту"
+        lastCardTextView.text = "🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ\n👇 НАЖМИТЕ СКАНИРОВАТЬ"
         showBigToast("🔄 Все карты удалены")
     }
 
