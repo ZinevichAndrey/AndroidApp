@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">Test</string>
+
+    <string name="card_wild">WILD</string>
+    <string name="card_wild_plus_four">WILD +4</string>
+    <string name="card_reverse">REVERSE</string>
+    <string name="card_skip">SKIP</string>
+    <string name="card_plus_two">+2</string>
+    <string name="card_zero">0</string>
+    <string name="card_one">1</string>
+    <string name="card_two">2</string>
+    <string name="card_three">3</string>
+    <string name="card_four">4</string>
+    <string name="card_five">5</string>
+    <string name="card_six">6</string>
+    <string name="card_seven">7</string>
+    <string name="card_eight">8</string>
+    <string name="card_nine">9</string>
 </resources>

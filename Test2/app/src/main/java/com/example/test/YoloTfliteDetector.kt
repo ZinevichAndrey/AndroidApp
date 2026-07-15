@@ -16,7 +16,7 @@ class YoloTfliteDetector(private val context: Context) {
     companion object {
         private const val TAG = "YOLO_TFLITE"
         private const val MODEL_FILENAME = "model.tflite"
-        private const val INPUT_SIZE = 640  // Оставляем 640, модель требует
+        private const val INPUT_SIZE = 640
         private const val CONF_THRESHOLD = 0.12f
         private const val NMS_THRESHOLD = 0.45f
     }
@@ -28,7 +28,8 @@ class YoloTfliteDetector(private val context: Context) {
         var h: Float,
         var conf: Float,
         var cls: Int,
-        var clsName: String = ""
+        var clsName: String = "",
+        var score: Int = 0
     )
 
     private var interpreter: Interpreter? = null
@@ -88,20 +89,17 @@ class YoloTfliteDetector(private val context: Context) {
 
             val detections = parseYoloOutput(outputBuffer)
 
+            // Масштабируем координаты обратно к оригинальному размеру
             detections.map {
-                val x = (it.x * size) + startX
-                val y = (it.y * size) + startY
-                val w = it.w * size
-                val h = it.h * size
-
                 Detection(
-                    x = x.coerceIn(0f, originalWidth.toFloat()),
-                    y = y.coerceIn(0f, originalHeight.toFloat()),
-                    w = w,
-                    h = h,
+                    x = (it.x * size + startX).coerceIn(0f, originalWidth.toFloat()),
+                    y = (it.y * size + startY).coerceIn(0f, originalHeight.toFloat()),
+                    w = it.w * size,
+                    h = it.h * size,
                     conf = it.conf,
                     cls = it.cls,
-                    clsName = CardMapping.getReadableName(it.cls)
+                    clsName = "", // Заполняется в MainActivity
+                    score = 0      // Заполняется в MainActivity
                 )
             }
 
@@ -151,7 +149,18 @@ class YoloTfliteDetector(private val context: Context) {
                 if (maxConf > CONF_THRESHOLD && bestClass >= 0) {
                     val x = (cx - w / 2f).coerceIn(0f, 1f)
                     val y = (cy - h / 2f).coerceIn(0f, 1f)
-                    detections.add(Detection(x, y, w, h, maxConf, bestClass))
+                    detections.add(
+                        Detection(
+                            x = x,
+                            y = y,
+                            w = w,
+                            h = h,
+                            conf = maxConf,
+                            cls = bestClass,
+                            clsName = "",
+                            score = 0
+                        )
+                    )
                 }
             }
 
@@ -194,8 +203,6 @@ class YoloTfliteDetector(private val context: Context) {
         val union = area1 + area2 - intersection
         return if (union > 0) intersection / union else 0f
     }
-
-
 
     fun close() {
         interpreter?.close()

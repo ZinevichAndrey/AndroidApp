@@ -4,5 +4,6 @@ enum class CardColor {
     BLUE,
     GREEN,
     YELLOW,
-    RED
+    RED,
+    MULTICOLORED
 }
