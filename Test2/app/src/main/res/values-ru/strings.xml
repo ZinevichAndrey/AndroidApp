@@ -16,4 +16,40 @@
     <string name="card_seven">7</string>
     <string name="card_eight">8</string>
     <string name="card_nine">9</string>
+    <string name="score_counter">UNO СЧЁТЧИК ОЧКОВ</string>
+    <string name="scan_camera">🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ
+👇 НАЖМИТЕ СКАНИРОВАТЬ</string>
+    <string name="scan">🔍 СКАНИРОВАТЬ</string>
+    <string name="remove_last">🗑️ УДАЛИТЬ ПОСЛЕДНЮЮ</string>
+    <string name="reset_all">🔄 СБРОСИТЬ \n ВСЁ</string>
+    <string name="finish">✅ ЗАВЕРШИТЬ</string>
+    <string name="no_cards">Нет карт</string>
+    <string name="camera_not_permission_txt">Камера не разрешена</string>
+    <string name="camera_ready">✅ Камера готова</string>
+    <string name="no_image">❌ Нет изображения</string>
+    <string name="scanning">🔍 СКАНИРОВАНИЕ...</string>
+    <string name="card_not_recognized">❌ КАРТА НЕ РАСПОЗНАНА</string>
+    <string name="place_map">🎯 Поместите карту в рамку</string>
+    <string name="exception_scanning">❌ Ошибка сканирования</string>
+    <string name="unknown_id">❌ Неизвестный ID:</string>
+    <string name="unknown_card">❌ Неизвестная карта</string>
+    <string name="card_not_found">❌ Карта не найдена</string>
+    <string name="no_option_choose">❌ Нет вариантов для выбора</string>
+    <string name="correct_option">Выберите правильный вариант:</string>
+    <string name="score">очков</string>
+    <string name="cancel">❌ ОТМЕНА</string>
+    <string name="scanning_cancel">❌ Сканирование отменено</string>
+    <string name="choose_card">🤔 Выберите карту</string>
+    <string name="removed">🗑️ Удалена:</string>
+    <string name="no_cards_delete">⚠️ Нет карт для удаления</string>
+    <string name="list_of_cards">📋 СПИСОК КАРТ \n</string>
+    <string name="no_cards_yet">Пока нет карт \n\n</string>
+    <string name="click_scan">Нажмите СКАНИРОВАТЬ \n</string>
+    <string name="repeat_next_card">Повторите для следующей</string>
+    <string name="total_points">💰 ВСЕГО ОЧКОВ:</string>
+    <string name="no_scanned_cards">⚠️ Нет отсканированных карт</string>
+    <string name="total">🏆 ИТОГО:</string>
+    <string name="cards">карт</string>
+    <string name="all_cards_removed">🔄 Все карты удалены</string>
+
 </resources>

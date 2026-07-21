@@ -16,4 +16,40 @@
     <string name="card_seven">7</string>
     <string name="card_eight">8</string>
     <string name="card_nine">9</string>
+    <string name="score_counter">UNO SCORE COUNTER</string>
+    <string name="scan_camera">🎯 PLACE THE CARD IN THE FRAME
+👇 CLICK SCAN</string>
+    <string name="scan">🔍 SCAN</string>
+    <string name="remove_last">🗑️ DELETE LAST</string>
+    <string name="reset_all">🔄 RESET ALL</string>
+    <string name="finish">✅ FINISH</string>
+    <string name="no_cards">No cards</string>
+    <string name="camera_not_permission_txt">Camera not permission</string>
+    <string name="camera_ready">✅ Camera is ready</string>
+    <string name="no_image">❌ No image</string>
+    <string name="scanning">🔍 SCANNING...</string>
+    <string name="card_not_recognized">❌ CARD NOT RECOGNIZED</string>
+    <string name="place_map">🎯 Place the map in the frame</string>
+    <string name="exception_scanning">❌ Exception scanning</string>
+    <string name="unknown_id">❌ Unknown ID:</string>
+    <string name="unknown_card">❌ Unknown card</string>
+    <string name="card_not_found">❌ Card not found</string>
+    <string name="no_option_choose">❌ No options to choose from</string>
+    <string name="correct_option">Choose the correct option:</string>
+    <string name="score">score</string>
+    <string name="cancel">❌ CANCEL</string>
+    <string name="scanning_cancel">❌ Scanning cancelled</string>
+    <string name="choose_card">🤔 Выберите карту</string>
+    <string name="removed">🗑️ Removed:</string>
+    <string name="no_cards_delete">⚠️ No cards to delete</string>
+    <string name="list_of_cards">📋 LIST OF CARDS \n</string>
+    <string name="no_cards_yet">There are no cards yet \n\n</string>
+    <string name="click_scan">Click SCAN \n</string>
+    <string name="repeat_next_card">Repeat for the next one</string>
+    <string name="total_points">💰 TOTAL POINTS:</string>
+    <string name="no_scanned_cards">⚠️ No scanned cards</string>
+    <string name="total">🏆 TOTAL:</string>
+    <string name="cards">cards</string>
+    <string name="all_cards_removed">🔄 All cards removed</string>
+
 </resources>

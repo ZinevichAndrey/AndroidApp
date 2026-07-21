@@ -9,6 +9,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -46,10 +47,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupUI()
-
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         observeViewModel()
-
         detector = YoloTfliteDetector(this)
         if (checkPermission()) startCamera() else requestPermission()
     }
@@ -70,9 +69,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupUI() {
         previewView = PreviewView(this)
-
         val titleTextView = TextView(this).apply {
-            text = "UNO СЧЁТЧИК ОЧКОВ"
+            text = getString(R.string.score_counter)
             textSize = 22f
             setTextColor(0xFFFFFFFF.toInt())
             setBackgroundColor(0x80000000.toInt())
@@ -111,7 +109,7 @@ class MainActivity : AppCompatActivity() {
         ))
 
         lastCardTextView = TextView(this).apply {
-            text = "🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ\n👇 НАЖМИТЕ СКАНИРОВАТЬ"
+            text = getString(R.string.scan_camera)
             textSize = 14f
             setTextColor(0xFFFFFF00.toInt())
             setBackgroundColor(0x88000000.toInt())
@@ -120,31 +118,39 @@ class MainActivity : AppCompatActivity() {
         }
 
         scanButton = Button(this).apply {
-            text = "🔍 СКАНИРОВАТЬ"
+            text = getString(R.string.scan)
             textSize = 20f
+            minWidth = 0
+            minimumWidth = 0
             setOnClickListener { performDetection() }
         }
 
         removeLastButton = Button(this).apply {
-            text = "🗑️ УДАЛИТЬ ПОСЛЕДНЮЮ"
+            text = getString(R.string.remove_last)
             textSize = 18f
+            minWidth = 0
+            minimumWidth = 0
             setOnClickListener { removeLastCard() }
         }
 
         resetButton = Button(this).apply {
-            text = "🔄 СБРОСИТЬ ВСЁ"
+            text = getString(R.string.reset_all)
             textSize = 18f
+            minWidth = 0
+            minimumWidth = 0
             setOnClickListener { resetAll() }
         }
 
         finishButton = Button(this).apply {
-            text = "✅ ЗАВЕРШИТЬ"
+            text = getString(R.string.finish)
             textSize = 20f
+            minWidth = 0
+            minimumWidth = 0
             setOnClickListener { finishScanning() }
         }
 
         textView = TextView(this).apply {
-            text = "Нет карт"
+            text = getString(R.string.no_cards)
             setTextColor(0xFFFFFFFF.toInt())
             setBackgroundColor(0x88000000.toInt())
             setPadding(16, 16, 16, 16)
@@ -172,6 +178,8 @@ class MainActivity : AppCompatActivity() {
 
         val buttonsContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
+            buttonRow1.setPadding(16, 8, 16, 4)
+            buttonRow2.setPadding(16, 4, 16, 8)
             addView(buttonRow1)
             addView(buttonRow2)
         }
@@ -201,7 +209,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startCamera()
         } else {
-            Toast.makeText(this, "Камера не разрешена", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.camera_not_permission_txt), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -211,10 +219,8 @@ class MainActivity : AppCompatActivity() {
             val cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build()
             preview.setSurfaceProvider(previewView.surfaceProvider)
-
             cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview)
-            showBigToast("✅ Камера готова")
-            Log.d(TAG, "✅ Камера запущена")
+            showBigToast(getString(R.string.camera_ready))
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -233,19 +239,17 @@ class MainActivity : AppCompatActivity() {
 
         val bitmap = previewView.bitmap
         if (bitmap == null) {
-            showBigToast("❌ Нет изображения")
+            showBigToast(getString(R.string.no_image))
             return
         }
 
         viewModel.setScanning(true)
         scanButton.isEnabled = false
-        viewModel.setLastCardText("🔍 СКАНИРОВАНИЕ...")
+        viewModel.setLastCardText(getString(R.string.scanning))
 
         Thread {
             try {
                 val results = detector.detect(bitmap)
-
-                // ЗАПОЛНЯЕМ ИМЯ КАРТЫ С УЧЕТОМ ЯЗЫКА
                 val bestCard = results.maxByOrNull { it.conf }
                 bestCard?.let { card ->
                     card.clsName = CardMapping.getReadableName(card.cls, this)
@@ -255,16 +259,15 @@ class MainActivity : AppCompatActivity() {
                     if (bestCard != null && bestCard.conf > 0.08f) {
                         handleDetection(bestCard)
                     } else {
-                        showBigToast("❌ КАРТА НЕ РАСПОЗНАНА")
-                        viewModel.setLastCardText("🎯 Поместите карту в рамку")
+                        showBigToast(getString(R.string.card_not_recognized))
+                        viewModel.setLastCardText(getString(R.string.place_map))
                         viewModel.setScanning(false)
                         scanButton.isEnabled = true
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Ошибка: ${e.message}")
                 Handler(Looper.getMainLooper()).post {
-                    showBigToast("❌ Ошибка сканирования")
+                    showBigToast(getString(R.string.exception_scanning))
                     viewModel.setScanning(false)
                     scanButton.isEnabled = true
                 }
@@ -274,25 +277,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleDetection(detection: YoloTfliteDetector.Detection) {
         val id = detection.cls
-        Log.d(TAG, "📊 ID: $id")
+       // Log.d(TAG, "📊 ID: $id")
 
         if (!CardMapping.isKnown(id)) {
-            showBigToast("❌ Неизвестный ID: $id")
+            showBigToast(getString(R.string.unknown_id) + " $id")
             viewModel.setScanning(false)
             scanButton.isEnabled = true
-            viewModel.setLastCardText("❌ Неизвестная карта (ID: $id)")
+            viewModel.setLastCardText(getString(R.string.unknown_card) + "(ID: $id)")
             return
         }
 
         if (CardMapping.isAmbiguous(id)) {
-            Log.d(TAG, "🤔 Неоднозначный ID: ${CardMapping.getReadableNames(id, this)}")
+          //  Log.d(TAG, "🤔 Неоднозначный ID: ${CardMapping.getReadableNames(id, this)}")
             showCardSelectionDialog(id, detection)
             return
         }
 
         val card = CardMapping.getCard(id)
         if (card != null) {
-            // ИСПОЛЬЗУЕМ УЖЕ ЗАПОЛНЕННОЕ ИМЯ
             val cardName = detection.clsName.ifEmpty { CardMapping.formatCardForDisplay(card, this) }
 
             val detectionWithScore = YoloTfliteDetector.Detection(
@@ -306,10 +308,10 @@ class MainActivity : AppCompatActivity() {
                 score = card.type.value
             )
 
-            Log.d(TAG, "✅ Одна карта: $cardName (${card.type.value} очков)")
+         //   Log.d(TAG, "✅ Одна карта: $cardName (${card.type.value} очков)")
             addCardToScanned(detectionWithScore, cardName, card.type.value)
         } else {
-            showBigToast("❌ Карта не найдена")
+            showBigToast(getString(R.string.card_not_found))
             viewModel.setScanning(false)
             scanButton.isEnabled = true
         }
@@ -322,16 +324,16 @@ class MainActivity : AppCompatActivity() {
 
         val cards = CardMapping.getCards(id)
 
-        Log.d(TAG, "========================================")
-        Log.d(TAG, "🤔 ПОКАЗ ДИАЛОГА ВЫБОРА")
-        Log.d(TAG, "ID: $id")
-        Log.d(TAG, "Количество вариантов: ${cards.size}")
+//        Log.d(TAG, "========================================")
+//        Log.d(TAG, "🤔 ПОКАЗ ДИАЛОГА ВЫБОРА")
+//        Log.d(TAG, "ID: $id")
+//        Log.d(TAG, "Количество вариантов: ${cards.size}")
 
         if (cards.isEmpty()) {
-            showBigToast("❌ Нет вариантов для выбора")
+            showBigToast(getString(R.string.no_option_choose))
             viewModel.setWaitingForChoice(false)
             scanButton.isEnabled = true
-            viewModel.setLastCardText("🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ\n👇 НАЖМИТЕ СКАНИРОВАТЬ")
+            viewModel.setLastCardText(getString(R.string.scan_camera))
             return
         }
 
@@ -341,7 +343,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val infoText = TextView(this).apply {
-            text = "Выберите правильный вариант:"
+            text = getString(R.string.correct_option)
             textSize = 16f
             setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.black))
             setPadding(0, 0, 0, 20)
@@ -352,7 +354,7 @@ class MainActivity : AppCompatActivity() {
 
             val cardName = CardMapping.formatCardForDisplay(card, this)
             val score = card.type.value
-            val buttonText = "$cardName ($score очков)"
+            val buttonText = "$cardName ($score)" + getString(R.string.score)
 
             val button = Button(this).apply {
                 text = buttonText
@@ -403,21 +405,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         val cancelButton = Button(this).apply {
-            text = "❌ ОТМЕНА"
+            text = getString(R.string.cancel)
             textSize = 16f
             setPadding(32, 20, 32, 20)
             setBackgroundColor(ContextCompat.getColor(this@MainActivity, android.R.color.transparent))
             setTextColor(ContextCompat.getColor(this@MainActivity, android.R.color.holo_red_dark))
             gravity = Gravity.CENTER
             setOnClickListener {
-                Log.d(TAG, "❌ Выбор отменен")
+            //    Log.d(TAG, "❌ Выбор отменен")
                 currentDialog?.dismiss()
                 currentDialog = null
-
-                showBigToast("❌ Сканирование отменено")
+                showBigToast(getString(R.string.scanning_cancel))
                 viewModel.setWaitingForChoice(false)
                 scanButton.isEnabled = true
-                viewModel.setLastCardText("🎯 ПОМЕСТИТЕ КАРТУ В РАМКУ\n👇 НАЖМИТЕ СКАНИРОВАТЬ")
+                viewModel.setLastCardText(getString(R.string.scan_camera))
             }
         }
 
@@ -431,19 +432,19 @@ class MainActivity : AppCompatActivity() {
         dialogView.addView(cancelButton)
 
         currentDialog = AlertDialog.Builder(this)
-            .setTitle("🤔 Выберите карту")
+            .setTitle(getString(R.string.choose_card))
             .setView(dialogView)
             .setCancelable(false)
             .create()
 
         currentDialog?.show()
-        Log.d(TAG, "✅ Кастомный диалог с ${cards.size} вариантами показан")
+     //   Log.d(TAG, "✅ Кастомный диалог с ${cards.size} вариантами показан")
     }
 
     private fun addCardToScanned(detection: YoloTfliteDetector.Detection, cardName: String, score: Int) {
         viewModel.addCard(detection)
         updateUI()
-        showBigToast("✅ $cardName +$score очков")
+        showBigToast("✅ $cardName +$score" + getString(R.string.score))
 
         viewModel.setScanning(false)
         scanButton.isEnabled = true
@@ -453,9 +454,9 @@ class MainActivity : AppCompatActivity() {
         val removed = viewModel.removeLastCard()
         if (removed != null) {
             updateUI()
-            showBigToast("🗑️ Удалена: ${removed.clsName}")
+            showBigToast(getString(R.string.removed) + " ${removed.clsName}")
         } else {
-            showBigToast("⚠️ Нет карт для удаления")
+            showBigToast(getString(R.string.no_cards_delete))
         }
     }
 
@@ -464,21 +465,21 @@ class MainActivity : AppCompatActivity() {
 
         if (!viewModel.hasCards()) {
             sb.append("═══════════════════════════\n")
-            sb.append("📋 СПИСОК КАРТ\n")
+            sb.append(getString(R.string.list_of_cards))
             sb.append("═══════════════════════════\n\n")
-            sb.append("Пока нет карт\n\n")
-            sb.append("1. Поместите карту в рамку\n")
-            sb.append("2. Нажмите СКАНИРОВАТЬ\n")
-            sb.append("3. Повторите для следующей")
+            sb.append(getString(R.string.no_cards_yet))
+            sb.append("1. " + getString(R.string.place_map) + "\n")
+            sb.append("2. " + getString(R.string.click_scan))
+            sb.append("3. " + getString(R.string.repeat_next_card))
         } else {
             sb.append("═══════════════════════════\n")
-            sb.append("📋 СПИСОК КАРТ (${viewModel.getCardCount()})\n")
+            sb.append(getString(R.string.list_of_cards) + " (${viewModel.getCardCount()})\n")
             sb.append("═══════════════════════════\n\n")
             sb.append(viewModel.getCardListString())
 
             val totalScore = viewModel.getTotalScore()
             sb.append("\n═══════════════════════════\n")
-            sb.append("💰 ВСЕГО ОЧКОВ: $totalScore\n")
+            sb.append(getString(R.string.total_points) + " $totalScore\n")
             sb.append("═══════════════════════════\n")
         }
 
@@ -490,19 +491,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun finishScanning() {
         if (!viewModel.hasCards()) {
-            showBigToast("⚠️ Нет отсканированных карт")
+            showBigToast(getString(R.string.no_scanned_cards))
             return
         }
 
         val totalScore = viewModel.getTotalScore()
         val cards = viewModel.scannedCards.value ?: emptyList()
-        val cardList = cards.joinToString(", ") { it.clsName }
+        //val cardList = cards.joinToString(", ") { it.clsName }
 
-        showBigToast("🏆 ИТОГО: $totalScore очков\n📋 ${cards.size} карт")
+        showBigToast(getString(R.string.total) + " $totalScore " + getString(R.string.score) + "\n📋 ${cards.size} " + getString(R.string.cards))
 
-        Log.d(TAG, "=== ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ===")
-        Log.d(TAG, "Карты: $cardList")
-        Log.d(TAG, "Очки: $totalScore")
+//        Log.d(TAG, "=== ФИНАЛЬНЫЙ РЕЗУЛЬТАТ ===")
+//        Log.d(TAG, "Карты: $cardList")
+//        Log.d(TAG, "Очки: $totalScore")
     }
 
     private fun resetAll() {
@@ -510,7 +511,7 @@ class MainActivity : AppCompatActivity() {
         currentDialog?.dismiss()
         currentDialog = null
         updateUI()
-        showBigToast("🔄 Все карты удалены")
+        showBigToast(getString(R.string.all_cards_removed))
     }
 
     override fun onDestroy() {
