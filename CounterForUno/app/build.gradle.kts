@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    //
 
 }
 
@@ -52,7 +51,7 @@ android {
 }
 
 dependencies {
-    //
+
     val appcompat_version = "1.7.1"
 
     implementation("androidx.appcompat:appcompat:$appcompat_version")
@@ -75,4 +74,15 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
+
+
+    implementation("androidx.camera:camera-camera2:1.2.3")
+    implementation("androidx.camera:camera-lifecycle:1.2.3")
+    implementation("androidx.camera:camera-view:1.2.3")
+
+
+    implementation("org.tensorflow:tensorflow-lite:2.17.0")
+
 }

@@ -14,10 +14,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 
 
+data class ModeOption(
+    val id: String,
+    val displayName: String
+)
+
 object Settings{
     private val screenErrorTag = "ErrorScreen"
     private const val WINNER_KEY = "WINNER"
     private const val CREATE_PLAYER_KEY = "CreatePlayer"
+
+    private var mode: String = "points"
+
+    fun setMode(mode: String) {
+        this.mode = mode
+    }
+
+    fun getMode(): String {
+        return this.mode
+    }
+
+
+
 
     fun getCreatePlayerKey(): String {
         return CREATE_PLAYER_KEY

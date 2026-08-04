@@ -4,6 +4,7 @@ package com.example.counterforuno
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -62,6 +63,26 @@ class GameMenu : ComponentActivity() {
     private var widthScreen = 0
     private val comparator = Comparator { p1: Player, p2: Player -> p2.score - p1.score }
     private val PLAYERS_FILE = "players.txt"
+    private val CAMERA_REQUEST_CODE = 1001
+
+
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data = result.data
+            val scoredPoints = data?.getIntExtra("SCORED_POINTS", 0) ?: 0
+            val playerId = data?.getLongExtra("PLAYER_ID", -1L) ?: -1L
+
+            if (scoredPoints > 0 && playerId != -1L) {
+                val currentPlayer = playerList.find { it.getId() == playerId }
+                currentPlayer?.let { player ->
+                    player.score += scoredPoints
+                    playerList.sortWith(comparator)
+                    // Обновляем UI - нужно обновить список в композе
+                    // Для этого можно использовать remember и mutableState
+                }
+            }
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,11 +148,17 @@ class GameMenu : ComponentActivity() {
                                     .clickable(interactionSource = remember {
                                         MutableInteractionSource()
                                     }, indication = null, onClick = {
-                                        if (player.score > 0) {
-                                            player.score -= 1
-                                            playerList.sortWith(comparator)
-                                            playersList.clear()
-                                            playersList.addAll(playerList)
+                                        // ---------------------------------------------------->
+                                        if (Settings.getMode() == "points") {
+
+                                        }
+                                        else {
+                                            if (player.score > 0) {
+                                                player.score -= 1
+                                                playerList.sortWith(comparator)
+                                                playersList.clear()
+                                                playersList.addAll(playerList)
+                                            }
                                         }
                                     })
                             ) {
@@ -189,14 +216,23 @@ class GameMenu : ComponentActivity() {
                                     .clickable(interactionSource = remember {
                                         MutableInteractionSource()
                                     }, indication = null, onClick = {
-                                        player.score += 1
-                                        playerList.sortWith(comparator)
-                                        playersList.clear()
-                                        playersList.addAll(playerList)
-                                        playersList.forEach {
-                                            println(it.getId())
+                                        if (Settings.getMode() == "points") {
+                                            val intent = Intent(context, CameraActivity::class.java)
+                                            intent.putExtra("PLAYER_ID", player.getId())
+                                            cameraLauncher.launch(intent)
                                         }
-                                    })
+                                        else {
+                                            player.score += 1
+                                            playerList.sortWith(comparator)
+                                            playersList.clear()
+                                            playersList.addAll(playerList)
+                                            playersList.forEach {
+                                                println(it.getId())
+                                            }
+                                        }
+
+                                    }
+                                    )
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.button_plus),

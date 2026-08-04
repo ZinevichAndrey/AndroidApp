@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-sdk android:minSdkVersion="30"
         android:targetSdkVersion="34"/>
-
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -54,6 +55,12 @@
             android:label="Direction"
             android:screenOrientation="portrait">
         </activity>
+        <activity android:name=".CameraActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:label="CameraActivity"
+            android:screenOrientation="portrait">
+        </activity>
+
     </application>
 
 </manifest>
