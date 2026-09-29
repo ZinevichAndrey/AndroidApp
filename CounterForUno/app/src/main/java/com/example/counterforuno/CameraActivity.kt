@@ -52,12 +52,7 @@ class CameraActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(application))[MainViewModel::class.java]
         observeViewModel()
         detector = YoloTfliteDetector(this)
-        if (checkPermission()) {
-            startCamera()
-        }
-        else {
-            requestPermission()
-        }
+        startCamera()
     }
 
     private fun observeViewModel() {
@@ -210,20 +205,6 @@ class CameraActivity : AppCompatActivity() {
 
     private fun checkPermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun requestPermission() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 100)
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            startCamera()
-        }
-        else {
-            Toast.makeText(this, getString(R.string.camera_not_permission), Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun startCamera() {
