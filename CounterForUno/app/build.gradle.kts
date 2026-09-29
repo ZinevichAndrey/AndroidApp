@@ -53,11 +53,8 @@ android {
 dependencies {
 
     val appcompat_version = "1.7.1"
-
     implementation("androidx.appcompat:appcompat:$appcompat_version")
-    implementation("androidx.appcompat:appcompat-resources:$appcompat_version")
     implementation("io.coil-kt:coil-compose:2.7.0")
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -74,13 +71,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
     implementation("androidx.camera:camera-camera2:1.2.3")
     implementation("androidx.camera:camera-lifecycle:1.2.3")
     implementation("androidx.camera:camera-view:1.2.3")
-
-
     implementation("org.tensorflow:tensorflow-lite:2.17.0")
 
 }
