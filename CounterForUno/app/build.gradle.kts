@@ -51,6 +51,7 @@ android {
 
 dependencies {
 
+
     val appcompat_version = "1.7.1"
     implementation("androidx.appcompat:appcompat:$appcompat_version")
     implementation("io.coil-kt:coil-compose:2.7.0")
