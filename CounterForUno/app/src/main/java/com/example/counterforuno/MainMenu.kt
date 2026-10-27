@@ -40,10 +40,13 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.core.content.ContextCompat
 
 
 class MainMenu : ComponentActivity() {
+    private val license = "LICENSE.txt"
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -85,6 +88,7 @@ class MainMenu : ComponentActivity() {
     @Composable
     private fun CreateMainMenu() {
         val context = LocalContext.current
+        var showLicense by remember { mutableStateOf(false) }
         val modeOptions = listOf(
             ModeOption(
                 "points",
@@ -197,6 +201,7 @@ class MainMenu : ComponentActivity() {
                     }
                 )
             }
+
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -231,6 +236,48 @@ class MainMenu : ComponentActivity() {
                     }
                 )
             }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 100.dp)
+            ) {
+                gameButton(
+                    image = R.drawable.main_fon,
+                    width = bottomButtonWidth * 0.7f,
+                    aspectRatio = 2.22f,
+                    onClick = { showLicense = true }
+                )
+            }
+        }
+        if (showLicense) {
+            val licenseText = rememberAssetText()
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showLicense = false },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = { showLicense = false }
+                    ) {
+                        Text("OK", color = Color.White)
+                    }
+                },
+                containerColor = Color(0xFF1E1E1E),
+                titleContentColor = Color.White,
+                textContentColor = Color.White,
+                title = { Text(getString(R.string.aboutTheApp)) },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 400.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            text = licenseText,
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            )
         }
     }
 
@@ -329,6 +376,18 @@ class MainMenu : ComponentActivity() {
                 },
             contentScale = ContentScale.Fit
         )
+    }
+
+    @Composable
+    private fun rememberAssetText(): String {
+        val context = LocalContext.current
+        return remember(license) {
+            runCatching {
+                context.assets.open(license)
+                    .bufferedReader()
+                    .use { it.readText() }
+            }.getOrElse {getString(R.string.failed_load_file,  license)}
+        }
     }
 
 
