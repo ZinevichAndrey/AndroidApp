@@ -17,6 +17,10 @@ Features
 
  Screenshots
 
-- <img src="screenshots/photo_1_2026-10-27_14-49-40.jpg" width="250" alt="Main Menu">
-- <img src="screenshots/photo_2_2026-10-27_14-49-40.jpg" width="250" alt="Game Menu">
-- <img src="screenshots/photo_3_2026-10-27_14-49-41.jpg" width="250" alt="Score Screen">
+<table>
+  <tr>
+    <td><img src="screenshots/photo_1_2026-10-27_14-49-40.jpg" width="250" alt="Main Menu"></td>
+    <td><img src="screenshots/photo_2_2026-10-27_14-49-40.jpg" width="250" alt="Game Menu"></td>
+    <td><img src="screenshots/photo_3_2026-10-27_14-49-41.jpg" width="250" alt="Score Screen"></td>
+  </tr>
+</table>
