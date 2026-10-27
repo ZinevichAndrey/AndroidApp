@@ -14,6 +14,7 @@ Features
 - **Game-inspired UI:** Custom backgrounds and buttons styled to match the UNO theme
 - **About dialog:** Built-in license viewer (MIT License)
 
-- Screenshots
+
+ Screenshots
 
 - 
