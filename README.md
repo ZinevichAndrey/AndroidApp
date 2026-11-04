@@ -15,9 +15,10 @@ Features
 - **About dialog:** Built-in license viewer (MIT License)
 
   System requirements
-  Android version: 7.1 API 25 or higher
-  Gradle: 8.13
-  Android gradle plugin: 8.11.1
+
+  **Android version:** 7.1 API 25 or higher
+  **Gradle:** 8.13
+  **Android gradle plugin:** 8.11.1
 
 
  Screenshots
